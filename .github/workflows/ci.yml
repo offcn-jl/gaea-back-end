@@ -1,0 +1,28 @@
+name: 持续集成
+
+on:
+  push:
+    branches: [ new-feature ]
+
+jobs:
+  ci:
+    name: 进行持续集成
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: 检出代码
+        uses: actions/checkout@v2
+
+      - name: 交叉编译
+        run: go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea
+
+      - name: 构建镜像
+        run: |
+          docker build -t "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}" .
+          docker tag "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}" "ccr.ccs.tencentyun.com/gaea/back-end:latest"
+
+      - name: 推送镜像
+        run: |
+          docker login -u ${{secrets.DOCKER_HUB_USER}} -p ${{secrets.DOCKER_HUB_PASSWORD}} ccr.ccs.tencentyun.com
+          docker push "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}"
+          docker push "ccr.ccs.tencentyun.com/gaea/back-end:latest"
