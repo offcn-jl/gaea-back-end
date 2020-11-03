@@ -13,3 +13,6 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# 忽略 .ieda 目录 避免泄露敏感信息
+.idea
