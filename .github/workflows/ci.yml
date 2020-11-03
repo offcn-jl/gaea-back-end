@@ -18,11 +18,11 @@ jobs:
 
       - name: 构建镜像
         run: |
-          docker build -t "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}" .
-          docker tag "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}" "ccr.ccs.tencentyun.com/gaea/back-end:latest"
+          docker build -t "ccr.ccs.tencentyun.com/gaea/back-end-test:${GITHUB_SHA:0:7}" .
+          docker tag "ccr.ccs.tencentyun.com/gaea/back-end-test:${GITHUB_SHA:0:7}" "ccr.ccs.tencentyun.com/gaea/back-end-test:latest"
 
       - name: 推送镜像
         run: |
           docker login -u ${{secrets.DOCKER_HUB_USER}} -p ${{secrets.DOCKER_HUB_PASSWORD}} ccr.ccs.tencentyun.com
-          docker push "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}"
-          docker push "ccr.ccs.tencentyun.com/gaea/back-end:latest"
+          docker push "ccr.ccs.tencentyun.com/gaea/back-end-test:${GITHUB_SHA:0:7}"
+          docker push "ccr.ccs.tencentyun.com/gaea/back-end-test:latest"
