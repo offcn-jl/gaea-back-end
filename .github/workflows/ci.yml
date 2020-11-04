@@ -13,6 +13,14 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v2
 
+      - name: 单元测试
+        run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+
+      - name: 上传单元测试结果
+        uses: codecov/codecov-action@v1.0.14
+          with:
+            token: ${{secrets.CODECOV_TOKEN}}
+
       # 如果不修正时区，会导致后续交叉编译步骤中，注入程序的版本号中的时间不正确
       # https://blog.csdn.net/xo19882011/article/details/83789702
       - name: 修正构建环境的时区
