@@ -17,7 +17,7 @@ jobs:
       # https://blog.csdn.net/xo19882011/article/details/83789702
       - name: 修正时区
         run: |
-          rm /etc/localtime
+          sudo rm /etc/localtime
           ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
       - name: 交叉编译
