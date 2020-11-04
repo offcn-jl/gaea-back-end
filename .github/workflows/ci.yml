@@ -14,9 +14,9 @@ jobs:
         uses: actions/checkout@v2
 
       # 如果不修正时区，会导致后续交叉编译步骤中，注入程序的版本号中的时间不正确
+      # https://blog.csdn.net/xo19882011/article/details/83789702
       - name: 修正时区
         run: |
-#          sudo apt install tzdata
           sudo ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
       - name: 交叉编译
