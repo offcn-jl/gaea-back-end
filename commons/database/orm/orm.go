@@ -63,6 +63,7 @@ func Init() error {
 	return nil
 }
 
+// autoMigrate 表结构自动迁移
 func autoMigrate() {
 	MySQL.Gaea.AutoMigrate(
 		// system 系统表
