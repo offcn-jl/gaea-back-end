@@ -18,7 +18,7 @@ jobs:
       - name: 修正时区
         run: |
           sudo rm /etc/localtime
-          ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+          sudo ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
       - name: 交叉编译
         # 不添加构建参数 CGO_ENABLED=0 会导致编译出的二进制程序无法在 alpine 中运行
