@@ -18,8 +18,8 @@ jobs:
 
       - name: 上传单元测试结果
         uses: codecov/codecov-action@v1.0.14
-          with:
-            token: ${{secrets.CODECOV_TOKEN}}
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
 
       # 如果不修正时区，会导致后续交叉编译步骤中，注入程序的版本号中的时间不正确
       # https://blog.csdn.net/xo19882011/article/details/83789702
