@@ -1,6 +1,6 @@
 FROM alpine
 LABEL maintainer="master@rebeta.cn"
 
-ADD gaea /
+ADD gaea_test /
 
 CMD ["/gaea"]
