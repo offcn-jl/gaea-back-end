@@ -13,6 +13,12 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v2
 
+      # 如果不修正时区，会导致后续交叉编译步骤中，注入程序的版本号中的时间不正确
+      - name: 修正时区
+        run: |
+          apt install tzdata
+          ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
       - name: 交叉编译
         # 不添加构建参数 CGO_ENABLED=0 会导致编译出的二进制程序无法在 alpine 中运行
         run: CGO_ENABLED=0 go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea
