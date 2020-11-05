@@ -15,13 +15,13 @@ jobs:
 
       - name: 测试
         run: |
-          sudo mysqld
-#          mysql -e 'create database gaea_unit_test character set utf8mb4;'
+#          sudo mysqld
+          mysql -e 'create database gaea_unit_test character set utf8mb4;'
 
       - name: 单元测试
         run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
         env:
-          UNIT_TEST_MYSQL_DSN_GAEA: "gaea_unit_test:@tcp(127.0.0.1:3306)/gaea_unit_test?charset=utf8mb4&parseTime=True&loc=Local"
+          UNIT_TEST_MYSQL_DSN_GAEA: "root:root@tcp(127.0.0.1:3306)/gaea_unit_test?charset=utf8mb4&parseTime=True&loc=Local"
 
       - name: 上传单元测试结果
         uses: codecov/codecov-action@v1.0.14
