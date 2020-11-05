@@ -34,6 +34,10 @@ func init() {
 		// 抛出异常
 		logger.Panic(err)
 	}
+	// 在程序结束时关闭数据库
+	defer func() {
+		orm.MySQL.Gaea.Close()
+	}()
 
 	// 初始化系统配置
 	if err := config.Init(orm.MySQL.Gaea); err != nil {

@@ -16,3 +16,6 @@
 
 # 忽略 .ieda 目录 避免泄露敏感信息
 .idea
+
+# 单元测试脚本
+run_auto_unit_test_on_mac.sh

@@ -39,10 +39,6 @@ func Init() error {
 	if MySQL.Gaea, err = gorm.Open("mysql", os.Getenv("MYSQL_DSN_GAEA")); err != nil {
 		return err
 	}
-	// 判断初始化是否成功
-	if MySQL.Gaea.Error != nil {
-		return MySQL.Gaea.Error
-	}
 	// 初始化成功后，判断是否需要进行数据库表结构迁移
 	if len(config.Version) != 31 {
 		logger.Log("应用版本号有误, 无法计算构建时间, 开始进行数据库结构自动迁移.")
@@ -63,7 +59,7 @@ func Init() error {
 	return nil
 }
 
-// autoMigrate 表结构自动迁移
+// autoMigrate 可以完成表结构自动迁移
 func autoMigrate() {
 	MySQL.Gaea.AutoMigrate(
 		// system 系统表
