@@ -1,4 +1,4 @@
-name: 持续集成
+name: CI
 
 on:
   push:
@@ -12,6 +12,30 @@ jobs:
 
       - name: 检出代码
         uses: actions/checkout@v2
+
+      # https://github.community/t/github-actions-cant-connect-to-mysql/17885
+      # https://github.blog/changelog/2020-02-21-github-actions-breaking-change-ubuntu-virtual-environments-will-no-longer-start-the-mysql-service-automatically/
+      - name: 启动系统自带 MySQL
+        run: |
+          sudo /etc/init.d/mysql start
+          mysql -uroot -proot -e 'create database gaea_unit_test character set utf8mb4;'
+
+      - name: 单元测试
+        run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+        env:
+          UNIT_TEST_MYSQL_DSN_GAEA: "root:root@tcp(127.0.0.1:3306)/gaea_unit_test?charset=utf8mb4&parseTime=True&loc=Local"
+
+      - name: 上传单元测试结果
+        uses: codecov/codecov-action@v1.0.14
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+
+      # 如果不修正时区，会导致后续交叉编译步骤中，注入程序的版本号中的时间不正确
+      # https://blog.csdn.net/xo19882011/article/details/83789702
+      - name: 修正构建环境的时区
+        run: |
+          sudo rm /etc/localtime
+          sudo ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
       - name: 交叉编译
         # 不添加构建参数 CGO_ENABLED=0 会导致编译出的二进制程序无法在 alpine 中运行
