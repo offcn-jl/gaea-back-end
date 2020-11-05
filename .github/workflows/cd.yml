@@ -21,7 +21,8 @@ jobs:
           mysql -uroot -proot -e 'create database gaea_unit_test character set utf8mb4;'
 
       - name: 单元测试
-        run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+        # 禁用并发测试 https://studygolang.com/articles/12587
+        run: go test -p 1 ./... -race -coverprofile=coverage.txt -covermode=atomic
         env:
           UNIT_TEST_MYSQL_DSN_GAEA: "root:root@tcp(127.0.0.1:3306)/gaea_unit_test?charset=utf8mb4&parseTime=True&loc=Local"
 
