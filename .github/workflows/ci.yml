@@ -15,7 +15,6 @@ jobs:
 
       - name: 测试
         run: |
-          service mysqld status
           mysqld
 
       - name: 单元测试
