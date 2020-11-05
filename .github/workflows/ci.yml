@@ -15,7 +15,6 @@ jobs:
 
       - name: 测试
         run: |
-#          sudo mysqld
           mysql -e 'create database gaea_unit_test character set utf8mb4;'
 
       - name: 单元测试
