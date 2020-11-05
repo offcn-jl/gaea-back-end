@@ -1,4 +1,4 @@
-name: 持续交付
+name: CD
 
 on:
   push:
