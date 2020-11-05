@@ -13,6 +13,11 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v2
 
+      - name: 测试
+        run: |
+          service mysqld status
+          mysqld
+
       - name: 单元测试
         run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
 
