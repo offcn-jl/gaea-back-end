@@ -13,8 +13,17 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v2
 
+      # https://github.community/t/github-actions-cant-connect-to-mysql/17885
+      # https://github.blog/changelog/2020-02-21-github-actions-breaking-change-ubuntu-virtual-environments-will-no-longer-start-the-mysql-service-automatically/
+      - name: 启动系统自带 MySQL
+        run: |
+          sudo /etc/init.d/mysql start
+          mysql -uroot -proot -e 'create database gaea_unit_test character set utf8mb4;'
+
       - name: 单元测试
         run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+        env:
+          UNIT_TEST_MYSQL_DSN_GAEA: "root:root@tcp(127.0.0.1:3306)/gaea_unit_test?charset=utf8mb4&parseTime=True&loc=Local"
 
       - name: 上传单元测试结果
         uses: codecov/codecov-action@v1.0.14
