@@ -13,7 +13,9 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v2
 
-      - name: 测试
+      # https://github.community/t/github-actions-cant-connect-to-mysql/17885
+      # https://github.blog/changelog/2020-02-21-github-actions-breaking-change-ubuntu-virtual-environments-will-no-longer-start-the-mysql-service-automatically/
+      - name: 启动系统自带 MySQL
         run: |
           sudo /etc/init.d/mysql start
           mysql -uroot -proot -e 'create database gaea_unit_test character set utf8mb4;'
