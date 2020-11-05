@@ -16,7 +16,7 @@ jobs:
       - name: 测试
         run: |
           sudo /etc/init.d/mysql start
-          mysql -h 127.0.0.1 -e 'create database gaea_unit_test character set utf8mb4;'
+          mysql -uroot -e 'create database gaea_unit_test character set utf8mb4;'
 
       - name: 单元测试
         run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
