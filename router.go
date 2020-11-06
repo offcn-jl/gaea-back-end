@@ -90,18 +90,21 @@ func initRouter(basePath string) *gin.Engine {
 	defaultGroup := router.Group(basePath)
 
 	// 内部服务路由组
+	// 用于对接第三方平台、为内部的工具提供服务等
 	servicesGroup := defaultGroup.Group("/services")
 	{
 		servicesGroup.GET("")
 	}
 
 	// 管理平台路由组
+	// 用于管理平台
 	managesGroup := defaultGroup.Group("/manages")
 	{
 		managesGroup.GET("")
 	}
 
 	// 活动 ( 外部服务 ) 路由组
+	// 用于专题页、为专题页服务的模块等
 	eventsGroup := defaultGroup.Group("/events")
 	{
 		eventsGroup.GET("")
