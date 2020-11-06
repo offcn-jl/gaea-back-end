@@ -8,7 +8,10 @@
 
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/offcn-jl/gaea-back-end/commons/config"
+)
 
 // initRouter 初始化路由
 func initRouter(basePath string) *gin.Engine {
@@ -17,6 +20,11 @@ func initRouter(basePath string) *gin.Engine {
 
 	// 使用默认配置初始化路由
 	router := gin.Default()
+
+	// 添加版本号
+	router.Use(func(c *gin.Context) {
+		c.Header("Server", "Gaea - "+config.Version)
+	})
 
 	// 默认路由组
 	defaultGroup := router.Group(basePath)
