@@ -47,5 +47,10 @@ func initRouter(basePath string) *gin.Engine {
 		eventsGroup.GET("")
 	}
 
+	// 未匹配到路由的路径返回统一的 404 响应
+	router.Use(func(c *gin.Context) {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Msg": "路径有误"})
+	})
+
 	return router
 }
