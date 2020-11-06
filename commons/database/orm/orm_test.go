@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+var unitTestTool = commons.UnitTestTool{}
+
 // Test_autoMigrate 测试 autoMigrate 函数是否可以完成表结构自动迁移
 func Test_autoMigrate(t *testing.T) {
 	Convey("测试 autoMigrate 函数是否可以完成表结构自动迁移", t, func() {
@@ -61,7 +63,8 @@ func Test_autoMigrate(t *testing.T) {
 	})
 
 	// 在程序结束时重置数据库
-	commons.TestToolRestORM(MySQL.Gaea)
+	unitTestTool.ORM = MySQL.Gaea
+	unitTestTool.CloseORM()
 }
 
 // TestInit 测试 Init 函数是否能够完成初始化数据库
@@ -103,5 +106,6 @@ func TestInit(t *testing.T) {
 	})
 
 	// 在程序结束时重置数据库
-	commons.TestToolRestORM(MySQL.Gaea)
+	unitTestTool.ORM = MySQL.Gaea
+	unitTestTool.CloseORM()
 }

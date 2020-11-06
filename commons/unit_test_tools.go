@@ -15,32 +15,36 @@ import (
 	"os"
 )
 
+// UnitTestTool 单元测试工具
+type UnitTestTool struct {
+	ORM *gorm.DB
+}
+
 // tableList 单元测试需要使用的数据库表列表
 var tableList = []interface{}{
 	// system 系统表
-	&structs.SystemConfig{},
+	structs.SystemConfig{},
 }
 
-// TestToolCreatORM 单元测试工具 创建 ORM
-func TestToolCreatORM() *gorm.DB {
+// CreatORM 单元测试工具 创建 ORM
+func (t *UnitTestTool) CreatORM() {
 	// 使用正确的 DSN 初始化 MYSQL 客户端
-	orm, _ := gorm.Open("mysql", os.Getenv("UNIT_TEST_MYSQL_DSN_GAEA"))
-	return orm
+	t.ORM, _ = gorm.Open("mysql", os.Getenv("UNIT_TEST_MYSQL_DSN_GAEA"))
 }
 
-// TestToolInitORM 单元测试工具 初始化 ORM
-func TestToolInitORM(orm *gorm.DB) {
+// InitORM 单元测试工具 初始化 ORM
+func (t *UnitTestTool) InitORM() {
 	for _, table := range tableList {
-		orm.AutoMigrate(table)
+		t.ORM.AutoMigrate(table)
 	}
 }
 
-// TestToolRestORM 单元测试工具 重置 ORM
-func TestToolRestORM(orm *gorm.DB) {
+// CloseORM 单元测试工具 关闭 ORM
+func (t *UnitTestTool) CloseORM() {
 	for _, table := range tableList {
-		orm.DropTableIfExists(table)
+		t.ORM.DropTableIfExists(table)
 	}
 
 	// 关闭 ORM 的连接
-	orm.Close()
+	t.ORM.Close()
 }
