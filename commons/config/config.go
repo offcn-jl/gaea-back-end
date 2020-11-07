@@ -33,7 +33,7 @@ func Get() structs.SystemConfig {
 	return currentConfig
 }
 
-// Update 修改配置 fixme 测试
+// Update 修改配置
 // 供系统内部调用 , 更新当前配置, 不对外直接暴露配置变量
 func Update(orm *gorm.DB, newConfig structs.SystemConfig) {
 	// 向数据库中添加新的配置
