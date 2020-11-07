@@ -11,6 +11,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
+	"github.com/offcn-jl/gaea-back-end/handlers/events"
 	"net/http"
 	"strings"
 )
@@ -89,25 +90,50 @@ func initRouter(basePath string) *gin.Engine {
 	// 默认路由组
 	defaultGroup := router.Group(basePath)
 
-	// 内部服务路由组
+	// 内部服务
 	// 用于对接第三方平台、为内部的工具提供服务等
 	servicesGroup := defaultGroup.Group("/services")
 	{
 		servicesGroup.GET("")
+
+		// 个人后缀
+		{
+			// 获取当前有效的后缀
+
+			// 获取即将过期的后缀
+
+			// 获取全部可用后缀 ( 即将过期 + 当前有效 )
+
+			// 推送信息到 CRM
+		}
 	}
 
-	// 管理平台路由组
+	// 管理平台
 	// 用于管理平台
 	managesGroup := defaultGroup.Group("/manages")
 	{
 		managesGroup.GET("")
 	}
 
-	// 活动 ( 外部服务 ) 路由组
+	// 活动 ( 外部服务 )
 	// 用于专题页、为专题页服务的模块等
 	eventsGroup := defaultGroup.Group("/events")
 	{
-		eventsGroup.GET("")
+		// 单点登陆
+		ssoGroup := eventsGroup.Group("/sso")
+		{
+			// 获取会话信息
+			ssoGroup.GET("/sessions/:MID/:Suffix/:Phone", events.SSOSessionInfo)
+
+			// 登陆
+			ssoGroup.POST("/sign-in", events.SSOSignIn)
+
+			// 注册
+			ssoGroup.POST("/sign-up", events.SSOSignUp)
+
+			// 发送验证码
+			ssoGroup.POST("/verification-code/send/:MID/:Phone", events.SSOSendVerificationCode)
+		}
 	}
 
 	// 未匹配到路由的路径返回统一的 404 响应

@@ -22,8 +22,17 @@ type UnitTestTool struct {
 
 // tableList 单元测试需要使用的数据库表列表
 var tableList = []interface{}{
-	// system 系统表
+	// System 系统
 	structs.SystemConfig{},
+	// SingleSignOn 单点登陆
+	structs.SingleSignOnLoginModule{},
+	structs.SingleSignOnVerificationCode{},
+	structs.SingleSignOnUser{},
+	structs.SingleSignOnSession{},
+	structs.SingleSignOnSuffix{},
+	structs.SingleSignOnOrganization{},
+	structs.SingleSignOnCRMRoundLog{},
+	structs.SingleSignOnErrorLog{},
 }
 
 // CreatORM 单元测试工具 创建 ORM
