@@ -42,6 +42,9 @@ jobs:
         # 不添加构建参数 CGO_ENABLED=0 会导致编译出的二进制程序无法在 alpine 中运行
         run: CGO_ENABLED=0 go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea
 
+      - name: 添加 phonedata 库的手机号归属地代码数据到 Docker 的上下文
+        run: cp /home/runner/go/pkg/mod/github.com/xluohome/phonedata@v0.0.0-20200423024337-2be14779ab82/phone.dat ./
+
       - name: 构建镜像
         run: |
           docker build -t "ccr.ccs.tencentyun.com/gaea/back-end-test:${GITHUB_SHA:0:7}" .
