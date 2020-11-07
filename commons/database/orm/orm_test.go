@@ -48,7 +48,7 @@ func TestCustomGormLogFormatter(t *testing.T) {
 		So(fmt.Sprint(logs), ShouldContainSubstring, "NULL")
 
 		// 测试 各种类型的构造参数
-		logs = gorm.LogFormatter("sql", "调用方源码路径及代码的行数", time.Now().Sub(time.Now().Add(-1*time.Second)), "参数 ? ? ? ? ? ? ? ? ?" /* 带有 ? SQL 语句 */, []interface{}{time.Time{}, time.Unix(1604741402, 0), []byte("Byte 文字参数"), make([]byte, 10), testVal{"字符串 类型 driver.Value"}, testVal{nil}, 0} /* SQL 语句的构造参数 */, int64(0) /* 受影响的行数 */)
+		logs = gorm.LogFormatter("sql", "调用方源码路径及代码的行数", time.Now().Sub(time.Now().Add(-1*time.Second)), "参数 ? ? ? ? ? ? ? ? ?" /* 带有 ? SQL 语句 */, []interface{}{time.Time{}, time.Unix(1604741402, 0).In(time.FixedZone("CST", 8*3600)), []byte("Byte 文字参数"), make([]byte, 10), testVal{"字符串 类型 driver.Value"}, testVal{nil}, 0} /* SQL 语句的构造参数 */, int64(0) /* 受影响的行数 */)
 		So(fmt.Sprint(logs), ShouldContainSubstring, " 参数 '0000-00-00 00:00:00' '2020-11-07 17:30:02' 'Byte 文字参数' '<binary>' '字符串 类型 driver.Value' NULL 0")
 	})
 }
