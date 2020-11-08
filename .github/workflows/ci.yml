@@ -82,8 +82,5 @@ jobs:
       - name: 部署镜像到 TKE 上下文
         run: |
           kubectl set image deployment/${DEPLOYMENT_NAME} gaea-test=${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
-#          touch kustomization.yaml
-#          ./kustomize edit set image ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
-#          ./kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/${DEPLOYMENT_NAME}
           kubectl get services -o wide
