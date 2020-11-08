@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : sso
    @Software: GoLand
+   @Description: 结构体 单点登陆
 */
 
 package structs
@@ -57,7 +58,7 @@ type SingleSignOnSession struct {
 	// CRM 推送配置 可选字段
 	CustomerName       string `json:"CustomerName"`       // 客户姓名
 	CustomerIdentityID uint   `json:"CustomerIdentityID"` // 客户身份 ID, 来自 CRM 中的客户身份字典
-	CustomerCollage    string `json:"CustomerCollage"`    // 客户毕业院校
+	CustomerColleage   string `json:"CustomerColleage"`   // 客户毕业院校
 	CustomerMayor      string `json:"CustomerMayor"`      // 客户专业
 	Remark             string `json:"Remark"`             // 备注
 	// 平台日志
@@ -122,7 +123,7 @@ type SingleSignOnPushLog struct {
 	// CRM 推送配置 可选字段
 	CustomerName       string `json:"CustomerName"`       // 客户姓名
 	CustomerIdentityID uint   `json:"CustomerIdentityID"` // 客户身份 ID, 来自 CRM 中的客户身份字典
-	CustomerCollege    string `json:"CustomerCollege"`    // 客户毕业院校
+	CustomerColleage   string `json:"CustomerColleage"`   // 客户毕业院校
 	CustomerMayor      string `json:"CustomerMayor"`      // 客户专业
 	Remark             string `json:"Remark"`             // 备注
 }
