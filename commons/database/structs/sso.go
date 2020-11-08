@@ -116,10 +116,10 @@ type SingleSignOnPushLog struct {
 	ActualSuffix  string `json:"Suffix"`   // 调用接口时使用的后缀
 	CurrentSuffix string `gorm:"not null"` // 最终使用的后缀
 	// CRM 推送配置
-	CRMEFSID   string `gorm:"not null;column:crm_ef_sid"` // CRM 活动表单 SID
-	CRMChannel uint   `gorm:"not null"`                   // CRM 所属渠道
-	CRMOCode   uint   `gorm:"not null;column:crm_o_code"` // CRM 所属组织代码
-	CRMUID     uint   `gorm:"not null"`                   // CRM 用户ID
+	CRMEFSID   string `gorm:"not null;column:crm_ef_sid" binding:"required"` // CRM 活动表单 SID
+	CRMChannel uint   `gorm:"not null"`                                      // CRM 所属渠道
+	CRMOCode   uint   `gorm:"not null;column:crm_o_code"`                    // CRM 所属组织代码
+	CRMUID     uint   `gorm:"not null"`                                      // CRM 用户ID
 	// CRM 推送配置 可选字段
 	CustomerName       string `json:"CustomerName"`       // 客户姓名
 	CustomerIdentityID uint   `json:"CustomerIdentityID"` // 客户身份 ID, 来自 CRM 中的客户身份字典

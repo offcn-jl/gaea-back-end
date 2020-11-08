@@ -14,6 +14,7 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/responses"
 	"github.com/offcn-jl/gaea-back-end/handlers/events"
+	"github.com/offcn-jl/gaea-back-end/handlers/services"
 	"net/http"
 	"strings"
 )
@@ -96,17 +97,20 @@ func initRouter(basePath string) *gin.Engine {
 	// 用于对接第三方平台、为内部的工具提供服务等
 	servicesGroup := defaultGroup.Group("/services")
 	{
-		servicesGroup.GET("")
-
 		// 个人后缀
+		personalSuffixGroup := servicesGroup.Group("/personal-suffix")
 		{
 			// 获取当前有效的后缀
+			personalSuffixGroup.GET("/list/active", services.SuffixGetActive)
 
 			// 获取即将过期的后缀
+			personalSuffixGroup.GET("/list/deleting", services.SuffixGetDeleting)
 
 			// 获取全部可用后缀 ( 即将过期 + 当前有效 )
+			personalSuffixGroup.GET("/list/available", services.SuffixGetAvailable)
 
 			// 推送信息到 CRM
+			personalSuffixGroup.POST("/push/crm", services.SuffixPushCRM)
 		}
 	}
 

@@ -41,6 +41,7 @@ var tableList = []interface{}{
 	structs.SingleSignOnOrganization{},
 	structs.SingleSignOnCRMRoundLog{},
 	structs.SingleSignOnErrorLog{},
+	structs.SingleSignOnPushLog{},
 }
 
 // CreatORM 单元测试工具 创建 ORM
