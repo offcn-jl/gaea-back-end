@@ -5,10 +5,12 @@ on:
     branches: [ new-feature ]
 
 env:
+  TKE_REGISTRY: hkccr.ccs.tencentyun.com
   TKE_IMAGE_URL: hkccr.ccs.tencentyun.com/gaea/back-end-test
   TKE_REGION: ap-beijing
   TKE_CLUSTER_ID: cls-2ferrnvh
   DEPLOYMENT_NAME: gaea-test
+  CONTAINER_NAME: gaea-test
 
 jobs:
   ci:
@@ -58,7 +60,7 @@ jobs:
 
       - name: 推送镜像
         run: |
-          docker login -u ${{secrets.TKE_REGISTRY_USER}} -p ${{secrets.TKE_REGISTRY_PASSWORD}} hkccr.ccs.tencentyun.com
+          docker login -u ${{secrets.TKE_REGISTRY_USER}} -p ${{secrets.TKE_REGISTRY_PASSWORD}} ${{secrets.TKE_REGISTRY}}
           docker push ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
           docker push ${TKE_IMAGE_URL}:latest
 
@@ -74,7 +76,8 @@ jobs:
         run: |
           kubectl config use-context ${TKE_CLUSTER_ID}-context-default
 
-      - name: 部署镜像到 TKE
+      - name: 更新 TKE 中工作节点的镜像
+        # 更新命令参考 https://www.cnblogs.com/lovelinux199075/p/11246139.html
         # https://github.com/offcn-jl/gaea-back-end/new/main?filename=.github%2Fworkflows%2Ftencent.yml&workflow_template=tencent
         # 未开启 TKE 集群的 APIServer 外网访问将会导致报错 Unable to connect to the server: dial tcp: lookup cls-2ferrnvh.ccs.tencent-cloud.com on 127.0.0.53:53: no such host
         # 解决方法:
@@ -85,6 +88,6 @@ jobs:
         # 集群 -> 配置管理 -> Secret -> 新建 -> Dockercfg -> 命名空间选择 default -> 填写 仓库域名、用户名、密码
         # 集群 -> 工作负载 -> 更新Pod配置 -> 镜像访问凭证 -> 选择新建的访问凭证
         run: |
-          kubectl set image deployment/${DEPLOYMENT_NAME} gaea-test=${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
           kubectl rollout status deployment/${DEPLOYMENT_NAME}
           kubectl get services -o wide
