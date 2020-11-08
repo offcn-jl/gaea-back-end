@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : router
    @Software: GoLand
+   @Description: 路由及路由相关的业务
 */
 
 package main
@@ -11,6 +12,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
+	"github.com/offcn-jl/gaea-back-end/commons/responses"
 	"github.com/offcn-jl/gaea-back-end/handlers/events"
 	"net/http"
 	"strings"
@@ -39,7 +41,7 @@ func initRouter(basePath string) *gin.Engine {
 
 		// 不是标准路径
 		if len(strings.Split(c.Request.URL.Path, "/")) < 3 {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Msg": "路径有误"})
+			c.AbortWithStatusJSON(http.StatusNotFound, responses.Message("路径有误"))
 			return
 		}
 
@@ -53,7 +55,7 @@ func initRouter(basePath string) *gin.Engine {
 		case "events":
 			allowOrigins = config.Get().CORSRuleEvents
 		default:
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Msg": "路径有误"})
+			c.AbortWithStatusJSON(http.StatusNotFound, responses.Message("路径有误"))
 			return
 		}
 
@@ -73,7 +75,7 @@ func initRouter(basePath string) *gin.Engine {
 
 		// 未通过检查
 		if !pass {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"Msg": "请求未通过跨域检查"})
+			c.AbortWithStatusJSON(http.StatusForbidden, responses.Message("请求未通过跨域检查"))
 			return
 		}
 
@@ -138,7 +140,7 @@ func initRouter(basePath string) *gin.Engine {
 
 	// 未匹配到路由的路径返回统一的 404 响应
 	router.Use(func(c *gin.Context) {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Msg": "路径有误"})
+		c.AbortWithStatusJSON(http.StatusNotFound, responses.Message("路径有误"))
 	})
 
 	return router

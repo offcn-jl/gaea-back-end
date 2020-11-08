@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : sso
    @Software: GoLand
+   @Description: 单点登陆模块的接口及其辅助函数
 */
 
 package events
@@ -17,6 +18,7 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
 	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
 	"github.com/offcn-jl/gaea-back-end/commons/logger"
+	"github.com/offcn-jl/gaea-back-end/commons/responses"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
@@ -34,7 +36,7 @@ import (
 func SSOSendVerificationCode(c *gin.Context) {
 	// 验证手机号码是否有效
 	if !commons.Verify().Phone(c.Param("Phone")) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Msg": "手机号码不正确"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, responses.Phone.Invalid)
 		return
 	}
 
@@ -43,7 +45,7 @@ func SSOSendVerificationCode(c *gin.Context) {
 	SSOLoginModuleInfo := structs.SingleSignOnLoginModule{}
 	orm.MySQL.Gaea.Where("id = ?", c.Param("MID")).Find(&SSOLoginModuleInfo)
 	if SSOLoginModuleInfo.ID == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Msg": "登陆模块配置有误"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, responses.Message("登陆模块配置有误"))
 	} else {
 		switch SSOLoginModuleInfo.Platform {
 		case 1:
@@ -53,7 +55,7 @@ func SSOSendVerificationCode(c *gin.Context) {
 			// 使用腾讯云下发短信
 			sendVerificationCodeByTencentCloudSMSV2(c, SSOLoginModuleInfo.Sign, SSOLoginModuleInfo.TemplateID, SSOLoginModuleInfo.Term)
 		default:
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "登陆模块 SMS 平台配置有误"})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("登陆模块 SMS 平台配置有误"))
 		}
 	}
 }
@@ -66,14 +68,14 @@ func SSOSignUp(c *gin.Context) {
 	if err := c.ShouldBindJSON(&sessionInfo); err != nil {
 		// 绑定数据错误
 		logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "提交的 Json 数据不正确"})
+		c.JSON(http.StatusBadRequest, responses.Json.Invalid(err))
 		return
 	}
 	sessionInfo.SourceIP = c.ClientIP()
 
 	// 验证手机号码是否有效
 	if !commons.Verify().Phone(sessionInfo.Phone) {
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "手机号码不正确"})
+		c.JSON(http.StatusBadRequest, responses.Phone.Invalid)
 		return
 	}
 
@@ -82,7 +84,7 @@ func SSOSignUp(c *gin.Context) {
 	orm.MySQL.Gaea.Where("id = ?", sessionInfo.MID).Find(&moduleInfo)
 	if moduleInfo.ID == 0 {
 		// 模块不存在
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "单点登陆模块配置有误"})
+		c.JSON(http.StatusBadRequest, responses.Message("单点登陆模块配置有误"))
 		return
 	}
 	// 保存模块信息到会话信息中
@@ -93,18 +95,18 @@ func SSOSignUp(c *gin.Context) {
 	orm.MySQL.Gaea.Where("phone = ?", sessionInfo.Phone).Find(&codeInfo)
 	// 校验是否发送过验证码
 	if codeInfo.ID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "请您先获取验证码后再进行注册"})
+		c.JSON(http.StatusBadRequest, responses.Message("请您先获取验证码后再进行注册"))
 		return
 	}
 	// 校验验证码是正确
 	if sessionInfo.Code != codeInfo.Code {
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "验证码有误"})
+		c.JSON(http.StatusBadRequest, responses.Message("验证码有误"))
 		return
 	}
 	// 校验验证码是否有效
 	duration, _ := time.ParseDuration("-" + fmt.Sprint(codeInfo.Term) + "m")
 	if codeInfo.CreatedAt.Before(time.Now().Add(duration)) {
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "验证码失效"})
+		c.JSON(http.StatusBadRequest, responses.Message("验证码失效"))
 		return
 	}
 
@@ -121,7 +123,7 @@ func SSOSignUp(c *gin.Context) {
 	}
 
 	// 注册成功
-	c.JSON(http.StatusOK, gin.H{"Msg": "Success"})
+	c.JSON(http.StatusOK, responses.Success)
 }
 
 // SSOSignIn 单点登陆模块登陆接口的处理函数
@@ -132,14 +134,14 @@ func SSOSignIn(c *gin.Context) {
 	if err := c.ShouldBindJSON(&sessionInfo); err != nil {
 		// 绑定数据错误
 		logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "提交的 Json 数据不正确"})
+		c.JSON(http.StatusBadRequest, responses.Json.Invalid(err))
 		return
 	}
 	sessionInfo.SourceIP = c.ClientIP()
 
 	// 验证手机号码是否有效
 	if !commons.Verify().Phone(sessionInfo.Phone) {
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "手机号码不正确"})
+		c.JSON(http.StatusBadRequest, responses.Phone.Invalid)
 		return
 	}
 
@@ -148,7 +150,7 @@ func SSOSignIn(c *gin.Context) {
 	orm.MySQL.Gaea.Where("id = ?", sessionInfo.MID).Find(&moduleInfo)
 	if moduleInfo.ID == 0 {
 		// 模块不存在
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "单点登陆模块配置有误"})
+		c.JSON(http.StatusBadRequest, responses.Message("单点登陆模块配置有误"))
 		return
 	}
 	// 保存 CRM 活动表单 ID 到会话信息中
@@ -157,7 +159,7 @@ func SSOSignIn(c *gin.Context) {
 	// 校验用户是否已经注册 ( 避免重复注册 )
 	if !ssoIsSignUp(sessionInfo.Phone) {
 		// 保存注册信息
-		c.JSON(http.StatusForbidden, gin.H{"Msg": "请您先进行注册"})
+		c.JSON(http.StatusForbidden, responses.Message("请您先进行注册"))
 		return
 	}
 
@@ -169,7 +171,7 @@ func SSOSignIn(c *gin.Context) {
 	}
 
 	// 登陆成功
-	c.JSON(http.StatusOK, gin.H{"Msg": "Success"})
+	c.JSON(http.StatusOK, responses.Success)
 }
 
 // SSOSessionInfo 获取会话信息
@@ -192,7 +194,7 @@ func SSOSessionInfo(c *gin.Context) {
 
 	// 验证手机号是否有效
 	if c.Param("Phone") != "0" && !commons.Verify().Phone(c.Param("Phone")) {
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "手机号码不正确!"})
+		c.JSON(http.StatusBadRequest, responses.Phone.Invalid)
 		return
 	}
 
@@ -201,7 +203,7 @@ func SSOSessionInfo(c *gin.Context) {
 	orm.MySQL.Gaea.Where("id = ?", c.Param("MID")).Find(&moduleInfo)
 	if moduleInfo.ID == 0 {
 		// 模块不存在
-		c.JSON(http.StatusBadRequest, gin.H{"Msg": "单点登陆模块配置有误!"})
+		c.JSON(http.StatusBadRequest, responses.Message("单点登陆模块配置有误!"))
 		return
 	}
 	// 保存模块信息到会话信息中
@@ -279,7 +281,7 @@ func SSOSessionInfo(c *gin.Context) {
 	}
 
 	// 返回会话信息
-	c.JSON(http.StatusOK, gin.H{"Msg": "Success", "Data": response})
+	c.JSON(http.StatusOK, responses.Data(response))
 }
 
 // sendVerificationCodeByOFFCN 使用中公短信平台发送验证码
@@ -299,25 +301,25 @@ func sendVerificationCodeByOFFCN(c *gin.Context, templateID, term uint) {
 		// 可复用验证码
 		template = "您的验证码是 %d ，%d 分钟内可重复使用。如非本人操作，请忽略本短信。"
 	default:
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "短信模板配置有误"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("短信模板配置有误"))
 		return
 	}
 
 	// 检查配置
 	if config.Get().OffcnSmsURL == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "未配置 中公教育短信平台 接口地址"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("未配置 中公教育短信平台 接口地址"))
 		return
 	}
 	if config.Get().OffcnSmsUserName == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "未配置 中公教育短信平台 用户名"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("未配置 中公教育短信平台 用户名"))
 		return
 	}
 	if config.Get().OffcnSmsPassword == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "未配置 中公教育短信平台 密码"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("未配置 中公教育短信平台 密码"))
 		return
 	}
 	if config.Get().OffcnSmsTjCode == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "未配置 中公教育短信平台 发送方识别码"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("未配置 中公教育短信平台 发送方识别码"))
 		return
 	}
 
@@ -329,7 +331,7 @@ func sendVerificationCodeByOFFCN(c *gin.Context, templateID, term uint) {
 		duration, _ := time.ParseDuration("-" + fmt.Sprint(verificationCodeInfo.Term) + "m")
 		if verificationCodeInfo.CreatedAt.After(time.Now().Add(duration)) {
 			// 上一条验证码未超过有效期
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Msg": "请勿重复发送验证码"})
+			c.AbortWithStatusJSON(http.StatusBadRequest, responses.Message("请勿重复发送验证码"))
 			return
 		}
 	}
@@ -351,34 +353,34 @@ func sendVerificationCodeByOFFCN(c *gin.Context, templateID, term uint) {
 	// 发送短信
 	if resp, err := http.PostForm(config.Get().OffcnSmsURL, data); err != nil {
 		logger.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "发送短信失败, 返回错误 : " + err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("发送短信失败, 返回错误 : "+err.Error()))
 	} else {
 		defer resp.Body.Close()
 		// 判断有没有发送成功
 		if resp.StatusCode != 200 {
 			// 请求出错
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "发送短信失败, 返回状态码 : " + fmt.Sprint(resp.StatusCode)})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("发送短信失败, 返回状态码 : "+fmt.Sprint(resp.StatusCode)))
 		} else {
 			// 读取 body
 			if respBytes, err := ioutil.ReadAll(resp.Body); err != nil {
 				logger.Error(err)
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "发送短信失败, 读取返回内容失败, 错误内容 : " + err.Error()})
+				c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("发送短信失败, 读取返回内容失败, 错误内容 : "+err.Error()))
 			} else {
 				// 解码 body
 				var respJsonMap map[string]interface{}
 				if err := json.Unmarshal(respBytes, &respJsonMap); err != nil {
 					logger.Error(err)
-					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "发送短信失败, 解码返回内容失败, 错误内容 : " + err.Error()})
+					c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("发送短信失败, 解码返回内容失败, 错误内容 : "+err.Error()))
 				} else {
 					// 返回请求回来的 Json 的 Map
 					if respJsonMap["status"].(float64) != 1 {
 						// 发送失败
-						c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "发送短信失败, [ " + fmt.Sprint(respJsonMap["status"]) + " ] " + fmt.Sprint(respJsonMap["msg"])})
+						c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("发送短信失败, [ "+fmt.Sprint(respJsonMap["status"])+" ] "+fmt.Sprint(respJsonMap["msg"])))
 					} else {
 						// 发送成功
 						// 保存验证码发送记录
 						orm.MySQL.Gaea.Create(&structs.SingleSignOnVerificationCode{Phone: c.Param("Phone"), Term: term, Code: code, SourceIP: c.ClientIP()})
-						c.JSON(http.StatusOK, gin.H{"Msg": "Success"})
+						c.JSON(http.StatusOK, responses.Success)
 					}
 				}
 			}
@@ -390,15 +392,15 @@ func sendVerificationCodeByOFFCN(c *gin.Context, templateID, term uint) {
 func sendVerificationCodeByTencentCloudSMSV2(c *gin.Context, sign string, templateID, term uint) {
 	// 检查配置
 	if config.Get().TencentCloudAPISecretID == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "未配置 腾讯云 令牌"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("未配置 腾讯云 令牌"))
 		return
 	}
 	if config.Get().TencentCloudAPISecretKey == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "未配置 腾讯云 密钥"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("未配置 腾讯云 密钥"))
 		return
 	}
 	if config.Get().TencentCloudSmsSdkAppId == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "未配置 腾讯云 短信应用 ID"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("未配置 腾讯云 短信应用 ID"))
 		return
 	}
 
@@ -415,7 +417,7 @@ func sendVerificationCodeByTencentCloudSMSV2(c *gin.Context, sign string, templa
 		duration, _ := time.ParseDuration("-" + fmt.Sprint(verificationCodeInfo.Term) + "m")
 		if verificationCodeInfo.CreatedAt.After(time.Now().Add(duration)) {
 			// 上一条验证码未超过有效期
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Msg": "请勿重复发送验证码"})
+			c.AbortWithStatusJSON(http.StatusBadRequest, responses.Message("请勿重复发送验证码"))
 			return
 		}
 	}
@@ -489,26 +491,26 @@ func sendVerificationCodeByTencentCloudSMSV2(c *gin.Context, sign string, templa
 	// 处理异常
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
 		logger.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "发送短信失败, [ " + err.(*errors.TencentCloudSDKError).GetCode() + " ] " + err.(*errors.TencentCloudSDKError).GetMessage()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("发送短信失败, [ "+err.(*errors.TencentCloudSDKError).GetCode()+" ] "+err.(*errors.TencentCloudSDKError).GetMessage()))
 		return
 	}
 	// 非 SDK 异常，直接失败。实际代码中可以加入其他的处理
 	if err != nil {
 		logger.Error(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Msg": "发送短信失败, 未知错误."})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Message("发送短信失败, 未知错误"))
 		return
 	}
 
 	if *response.Response.SendStatusSet[0].Code != "Ok" {
 		logger.DebugToJson("腾讯云短信平台响应内容", response.Response)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Msg": "发送短信失败, 错误内容 : " + *response.Response.SendStatusSet[0].Message})
+		c.AbortWithStatusJSON(http.StatusBadRequest, responses.Message("发送短信失败, 错误内容 : "+*response.Response.SendStatusSet[0].Message))
 		return
 	}
 
 	// 发送成功
 	// 保存验证码发送记录
 	orm.MySQL.Gaea.Create(&structs.SingleSignOnVerificationCode{Phone: c.Param("Phone"), Term: term, Code: code, SourceIP: c.ClientIP()})
-	c.JSON(http.StatusOK, gin.H{"Msg": "Success"})
+	c.JSON(http.StatusOK, responses.Success)
 }
 
 // ssoIsSignUp 内部函数 检查用户是否已经注册且未失效
@@ -537,13 +539,13 @@ func ssoCreateSession(session *structs.SingleSignOnSession) {
 	// 校验后缀
 	if session.ActualSuffix == "" {
 		// 后缀未填写, 使用默认后缀配置
-		ssoGetDefaultSuffix(session)
+		SSOGetDefaultSuffix(session)
 	} else {
 		suffixInfo := structs.SingleSignOnSuffix{}
 		orm.MySQL.Gaea.Unscoped().Where("suffix = ?", session.ActualSuffix).Find(&suffixInfo)
 		if suffixInfo.ID == 0 {
 			// 后缀无效, 使用默认后缀配置
-			ssoGetDefaultSuffix(session)
+			SSOGetDefaultSuffix(session)
 		} else {
 			session.CRMChannel = suffixInfo.CRMChannel
 			session.CRMUID = suffixInfo.CRMUID
@@ -555,7 +557,7 @@ func ssoCreateSession(session *structs.SingleSignOnSession) {
 				session.CRMOCode = organizationInfo.Code
 			} else {
 				// 未配置 CRMOID 或者是省级 ( 等于 1 ), 按手机号码归属地分配 CRM 信息
-				ssoDistributionByPhoneNumber(session)
+				SSODistributionByPhoneNumber(session)
 			}
 		}
 	}
@@ -577,8 +579,8 @@ func ssoCreateSession(session *structs.SingleSignOnSession) {
 	if session.CustomerIdentityID != 0 {
 		queryObject.Set("khsf", fmt.Sprint(session.CustomerIdentityID))
 	}
-	if session.CustomerCollage != "" {
-		queryObject.Set("colleage", session.CustomerCollage)
+	if session.CustomerColleage != "" {
+		queryObject.Set("colleage", session.CustomerColleage)
 	}
 	if session.CustomerMayor != "" {
 		queryObject.Set("mayor", session.CustomerMayor)
@@ -591,9 +593,6 @@ func ssoCreateSession(session *structs.SingleSignOnSession) {
 	if getResponse, err := http.Get(urlObject.String()); err != nil {
 		// 发送 GET 请求出错
 		logger.Error(err)
-		fmt.Println(6666)
-		fmt.Println(err)
-		fmt.Println(9999)
 		// 推送失败, 保存推送失败记录
 		orm.MySQL.Gaea.Create(&structs.SingleSignOnErrorLog{
 			Phone:      session.Phone,
@@ -621,8 +620,8 @@ func ssoCreateSession(session *structs.SingleSignOnSession) {
 	orm.MySQL.Gaea.Create(&session)
 }
 
-// ssoGetDefaultSuffix 内部函数 获取默认后缀配置
-func ssoGetDefaultSuffix(session *structs.SingleSignOnSession) {
+// SSOGetDefaultSuffix 内部函数 获取默认后缀配置
+func SSOGetDefaultSuffix(session *structs.SingleSignOnSession) {
 	session.CRMChannel = 7 // 默认所属渠道 19课堂
 	// 获取默认后缀
 	suffixInfo := structs.SingleSignOnSuffix{}
@@ -631,11 +630,11 @@ func ssoGetDefaultSuffix(session *structs.SingleSignOnSession) {
 	session.CurrentSuffix = suffixInfo.Suffix
 	session.CRMUID = suffixInfo.CRMUID
 	// 所属组织按照手机号码归属地进行分配
-	ssoDistributionByPhoneNumber(session)
+	SSODistributionByPhoneNumber(session)
 }
 
-// ssoDistributionByPhoneNumber 按照手机号码归属地进行归属分部分配
-func ssoDistributionByPhoneNumber(session *structs.SingleSignOnSession) {
+// SSODistributionByPhoneNumber 按照手机号码归属地进行归属分部分配
+func SSODistributionByPhoneNumber(session *structs.SingleSignOnSession) {
 	if record, err := phonedata.Find(session.Phone); err != nil {
 		logger.Error(err)
 		// 解析出错，循环分配给九个地市

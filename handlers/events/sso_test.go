@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : sso_test
    @Software: GoLand
+   @Description: 单点登陆模块的接口及其辅助函数 单元测试
 */
 
 package events
@@ -33,7 +34,7 @@ func TestSSOSendVerificationCode(t *testing.T) {
 	Convey("测试 SSOSendVerificationCode 单点登模块发送验证码接口的处理函数", t, func() {
 		// 测试 验证手机号码是否有效
 		SSOSendVerificationCode(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"手机号码不正确\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"手机号码不正确\"}")
 
 		// 配置手机号码
 		c.Params = gin.Params{gin.Param{Key: "Phone", Value: "17866886688"}}
@@ -41,25 +42,25 @@ func TestSSOSendVerificationCode(t *testing.T) {
 		// 测试 获取登陆模块的配置
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSendVerificationCode(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"登陆模块配置有误\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"登陆模块配置有误\"}")
 
 		// 配置登陆模块 ID
 		c.Params = gin.Params{gin.Param{Key: "Phone", Value: "17866886688"}, gin.Param{Key: "MID", Value: "10001"}}
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSendVerificationCode(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"登陆模块 SMS 平台配置有误\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"登陆模块 SMS 平台配置有误\"}")
 
 		// 配置 SMS 平台为 中公短信平台
 		orm.MySQL.Gaea.Model(structs.SingleSignOnLoginModule{}).Update(&structs.SingleSignOnLoginModule{Platform: 1})
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSendVerificationCode(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"短信模板配置有误\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"短信模板配置有误\"}")
 
 		// 配置 SMS 平台为 腾讯云
 		orm.MySQL.Gaea.Model(structs.SingleSignOnLoginModule{}).Update(&structs.SingleSignOnLoginModule{Platform: 2})
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSendVerificationCode(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 腾讯云 令牌\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 腾讯云 令牌\"}")
 	})
 }
 
@@ -73,7 +74,7 @@ func TestSSOSignUp(t *testing.T) {
 	Convey("测试 SSOSignUp 单点登模块注册接口的处理函数", t, func() {
 		// 测试 未绑定 Body 数据
 		SSOSignUp(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"提交的 Json 数据不正确\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Error\":\"invalid request\",\"Message\":\"提交的 Json 数据不正确\"}")
 
 		// 增加 Body
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10000,\"Phone\":\"*\"}"))
@@ -81,7 +82,7 @@ func TestSSOSignUp(t *testing.T) {
 		// 测试 验证手机号码是否有效
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignUp(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"手机号码不正确\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"手机号码不正确\"}")
 
 		// 修正手机号码
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10000,\"Phone\":\"17866668888\"}"))
@@ -89,7 +90,7 @@ func TestSSOSignUp(t *testing.T) {
 		// 测试 校验登录模块配置
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignUp(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"单点登陆模块配置有误\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"单点登陆模块配置有误\"}")
 
 		// 修正为已存在的登陆模块 ID
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10001,\"Phone\":\"17866668888\"}"))
@@ -97,7 +98,7 @@ func TestSSOSignUp(t *testing.T) {
 		// 测试 校验是否发送过验证码
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignUp(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"请您先获取验证码后再进行注册\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"请您先获取验证码后再进行注册\"}")
 
 		// 模拟获取验证码
 		createTestVerificationCode()
@@ -108,7 +109,7 @@ func TestSSOSignUp(t *testing.T) {
 		// 测试 校验验证码是正确 ( 此时的上下文中未填写验证码 )
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignUp(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"验证码有误\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"验证码有误\"}")
 
 		// 向请求中添加正确, 但已经失效的验证码
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10001,\"Phone\":\"17888886666\",\"Code\":9999}"))
@@ -116,7 +117,7 @@ func TestSSOSignUp(t *testing.T) {
 		// 测试 校验验证码是否有效
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignUp(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"验证码失效\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"验证码失效\"}")
 
 		// 更换上下文中的手机号码及验证码未为正确且未失效的内容
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10001,\"Phone\":\"17866886688\",\"Code\":9999}"))
@@ -124,7 +125,7 @@ func TestSSOSignUp(t *testing.T) {
 		// 测试 注册成功
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignUp(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"Success\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"Success\"}")
 
 		// 判断用户是否存在
 		So(ssoIsSignUp("17866886688"), ShouldBeTrue)
@@ -144,7 +145,7 @@ func TestSSOSignIn(t *testing.T) {
 	Convey("测试 SSOSignUp 单点登陆模块登陆接口的处理函数", t, func() {
 		// 测试 未绑定 Body 数据
 		SSOSignIn(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"提交的 Json 数据不正确\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Error\":\"invalid request\",\"Message\":\"提交的 Json 数据不正确\"}")
 
 		// 增加 Body
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10000,\"Phone\":\"*\"}"))
@@ -152,7 +153,7 @@ func TestSSOSignIn(t *testing.T) {
 		// 测试 验证手机号码是否有效
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignIn(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"手机号码不正确\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"手机号码不正确\"}")
 
 		// 修正手机号码
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10000,\"Phone\":\"17866668888\"}"))
@@ -160,7 +161,7 @@ func TestSSOSignIn(t *testing.T) {
 		// 测试 校验登录模块配置 ( 此时的上下文中没有登陆模块的配置 )
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignIn(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"单点登陆模块配置有误\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"单点登陆模块配置有误\"}")
 
 		// 修正为已存在的登陆模块 ID
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10001,\"Phone\":\"17866668888\"}"))
@@ -168,7 +169,7 @@ func TestSSOSignIn(t *testing.T) {
 		// 测试 校验用户是否已经注册
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignIn(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"请您先进行注册\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"请您先进行注册\"}")
 
 		// 修正为已经注册的手机号码
 		c.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MID\":10001,\"Phone\":\"17888666688\"}"))
@@ -176,7 +177,7 @@ func TestSSOSignIn(t *testing.T) {
 		// 测试 登陆成功
 		w.Body.Reset() // 再次测试前重置 body
 		SSOSignIn(c)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"Success\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"Success\"}")
 
 		// 判断会话是否存在
 		So(ssoIsSignIn("17888666688", 10001), ShouldBeTrue)
@@ -222,7 +223,7 @@ func TestSSOGetSessionInfo(t *testing.T) {
 		c.Params = gin.Params{gin.Param{Key: "Phone", Value: "17887106666"}, gin.Param{Key: "MID", Value: "10001"}}
 
 		Convey("测试 后缀不存在或错误", func() {
-			defaultInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":7,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":32431,\"CRMUser\":\"default\",\"Suffix\":\"default\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Msg\":\"Success\"}"
+			defaultInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":7,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":32431,\"CRMUser\":\"default\",\"Suffix\":\"default\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
 			// 此时未配置后缀, 即后缀不存在, 可以认为等同为后缀错误
 			w.Body.Reset() // 再次测试前重置 body
 			SSOSessionInfo(c)
@@ -242,8 +243,8 @@ func TestSSOGetSessionInfo(t *testing.T) {
 		})
 
 		Convey("测试 配置了后缀 是否可以获取到后缀对应的信息", func() {
-			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Msg\":\"Success\"}"
-			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Msg\":\"Success\"}"
+			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
+			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
 			// 配置后缀为测试后缀
 			c.Params = gin.Params{gin.Param{Key: "Phone", Value: "17887106666"}, gin.Param{Key: "MID", Value: "10001"}, gin.Param{Key: "Suffix", Value: "test"}}
 			w.Body.Reset() // 再次测试前重置 body
@@ -264,8 +265,8 @@ func TestSSOGetSessionInfo(t *testing.T) {
 		})
 
 		Convey("测试 配置了已经过期的后缀 是否依旧可以获取到后缀对应的信息", func() {
-			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Msg\":\"Success\"}"
-			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Msg\":\"Success\"}"
+			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
+			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
 			// 配置后缀为过期后缀
 			c.Params = gin.Params{gin.Param{Key: "Phone", Value: "17887106666"}, gin.Param{Key: "MID", Value: "10001"}, gin.Param{Key: "Suffix", Value: "expired"}}
 			w.Body.Reset() // 再次测试前重置 body
@@ -328,26 +329,26 @@ func Test_sendVerificationCodeByOFFCN(t *testing.T) {
 		// 测试验证配置
 		// 此时没有任何配置
 		sendVerificationCodeByOFFCN(c, 0, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"短信模板配置有误\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"短信模板配置有误\"}")
 		// 配置短信模板
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 中公教育短信平台 接口地址\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 中公教育短信平台 接口地址\"}")
 		// 配置 中公教育短信平台 接口地址
 		config.Update(orm.MySQL.Gaea, structs.SystemConfig{OffcnSmsURL: "https://fake-sms-platform.offcn.com"})
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 中公教育短信平台 用户名\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 中公教育短信平台 用户名\"}")
 		// 配置 中公教育短信平台 用户名
 		config.Update(orm.MySQL.Gaea, structs.SystemConfig{OffcnSmsURL: "https://fake-sms-platform.offcn.com", OffcnSmsUserName: "fake-sms-user"})
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 中公教育短信平台 密码\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 中公教育短信平台 密码\"}")
 		// 配置 中公教育短信平台 密码
 		config.Update(orm.MySQL.Gaea, structs.SystemConfig{OffcnSmsURL: "https://fake-sms-platform.offcn.com", OffcnSmsUserName: "fake-sms-user", OffcnSmsPassword: "fake-sms-password"})
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 中公教育短信平台 发送方识别码\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 中公教育短信平台 发送方识别码\"}")
 		// 配置 中公教育短信平台 发送方识别码
 		config.Update(orm.MySQL.Gaea, structs.SystemConfig{OffcnSmsURL: "https://fake-sms-platform.offcn.com", OffcnSmsUserName: "fake-sms-user", OffcnSmsPassword: "fake-sms-password", OffcnSmsTjCode: "fake-sms-tj-code"})
 
@@ -358,7 +359,7 @@ func Test_sendVerificationCodeByOFFCN(t *testing.T) {
 
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"请勿重复发送验证码\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"请勿重复发送验证码\"}")
 
 		// 配置为未发送过短信的手机号码
 		c.Params = gin.Params{gin.Param{Key: "Phone", Value: "17888668866"}}
@@ -369,13 +370,13 @@ func Test_sendVerificationCodeByOFFCN(t *testing.T) {
 
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"发送短信失败, 返回错误 : Post \\\"https://fake-sms-platform.offcn.com\\\": no responder found\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"发送短信失败, 返回错误 : Post \\\"https://fake-sms-platform.offcn.com\\\": no responder found\"}")
 
 		// 配置 httpmock 返回 非 200 的 http 状态码
 		httpmock.RegisterResponder(http.MethodPost, "https://fake-sms-platform.offcn.com", httpmock.NewStringResponder(http.StatusInternalServerError, ""))
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"发送短信失败, 返回状态码 : 500\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"发送短信失败, 返回状态码 : 500\"}")
 
 		// 配置 httpmock 返回 无法读取的 body todo 暂时无法测试
 
@@ -383,28 +384,28 @@ func Test_sendVerificationCodeByOFFCN(t *testing.T) {
 		httpmock.RegisterResponder(http.MethodPost, "https://fake-sms-platform.offcn.com", httpmock.NewBytesResponder(http.StatusOK, []byte("")))
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"发送短信失败, 解码返回内容失败, 错误内容 : unexpected end of JSON input\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"发送短信失败, 解码返回内容失败, 错误内容 : unexpected end of JSON input\"}")
 
 		// 配置 httpmock 返回 发送失败的 Json
 		httpmock.RegisterResponder(http.MethodPost, "https://fake-sms-platform.offcn.com", httpmock.NewJsonResponderOrPanic(http.StatusOK, gin.H{"status": 0, "msg": "fail"}))
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392074, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"发送短信失败, [ 0 ] fail\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"发送短信失败, [ 0 ] fail\"}")
 
 		// 配置 httpmock 返回 发送成功 Json
 		httpmock.RegisterResponder(http.MethodPost, "https://fake-sms-platform.offcn.com", httpmock.NewJsonResponderOrPanic(http.StatusOK, gin.H{"status": 1}))
 		w.Body.Reset()                                            // 再次测试前重置 body
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", nil) // 初始化 Request 避免 c.ClientIP() 出现空指针错误
 		sendVerificationCodeByOFFCN(c, 392074, 10)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"Success\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"Success\"}")
 
 		// 测试其他短信模板
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 392030, 10)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"请勿重复发送验证码\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"请勿重复发送验证码\"}")
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByOFFCN(c, 391863, 10)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"请勿重复发送验证码\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"请勿重复发送验证码\"}")
 
 		// 检查发送记录
 		singleSignOnVerificationCode := structs.SingleSignOnVerificationCode{}
@@ -426,18 +427,18 @@ func Test_sendVerificationCodeByTencentCloudSMSV2(t *testing.T) {
 		// 测试验证配置
 		// 此时没有任何配置
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 腾讯云 令牌\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 腾讯云 令牌\"}")
 
 		// 配置 腾讯云 令牌
 		config.Update(orm.MySQL.Gaea, structs.SystemConfig{TencentCloudAPISecretID: "fake-tencent-cloud-api-secret-id"})
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 腾讯云 密钥\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 腾讯云 密钥\"}")
 		// 配置 腾讯云 密钥
 		config.Update(orm.MySQL.Gaea, structs.SystemConfig{TencentCloudAPISecretID: "fake-tencent-cloud-api-secret-id", TencentCloudAPISecretKey: "fake-tencent-cloud-api-secret-key"})
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"未配置 腾讯云 短信应用 ID\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"未配置 腾讯云 短信应用 ID\"}")
 		// 配置 腾讯云 短信应用 ID
 		config.Update(orm.MySQL.Gaea, structs.SystemConfig{TencentCloudAPISecretID: "fake-tencent-cloud-api-secret-id", TencentCloudAPISecretKey: "fake-tencent-cloud-api-secret-key", TencentCloudSmsSdkAppId: "fake-tencent-cloud-sms-sdk-app-id"})
 
@@ -449,7 +450,7 @@ func Test_sendVerificationCodeByTencentCloudSMSV2(t *testing.T) {
 		// 测试重复发送验证码
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"请勿重复发送验证码\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"请勿重复发送验证码\"}")
 
 		// 配置为未发送过短信的手机号码
 		c.Params = gin.Params{gin.Param{Key: "Phone", Value: "17888668866"}}
@@ -461,7 +462,7 @@ func Test_sendVerificationCodeByTencentCloudSMSV2(t *testing.T) {
 		// 测试发送短信失败
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"发送短信失败, [ ClientError.NetworkError ] Fail to get response because Post \\\"https://sms.internal.tencentcloudapi.com/\\\": no responder found\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"发送短信失败, [ ClientError.NetworkError ] Fail to get response because Post \\\"https://sms.internal.tencentcloudapi.com/\\\": no responder found\"}")
 
 		// 测试 非 SDK 异常 todo 暂时无法测试
 
@@ -470,14 +471,14 @@ func Test_sendVerificationCodeByTencentCloudSMSV2(t *testing.T) {
 		httpmock.RegisterNoResponder(httpmock.NewJsonResponderOrPanic(http.StatusOK, gin.H{"Response": gin.H{"Error": gin.H{"Code": "AuthFailure.SignatureFailure", "Message": "The provided credentials could not be validated. Please check your signature is correct."}, "RequestId": "ed93f3cb-f35e-473f-b9f3-0d451b8b79c6"}}))
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 0)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"发送短信失败, [ AuthFailure.SignatureFailure ] The provided credentials could not be validated. Please check your signature is correct.\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"发送短信失败, [ AuthFailure.SignatureFailure ] The provided credentials could not be validated. Please check your signature is correct.\"}")
 
 		// 配置 httpmock 返回 发送失败的 Json
 		// https://cloud.tencent.com/document/product/382/38770
 		httpmock.RegisterNoResponder(httpmock.NewJsonResponderOrPanic(http.StatusOK, gin.H{"Response": gin.H{"SendStatusSet": []gin.H{{"Code": "FailCode", "Message": "FailMessage"}}}}))
 		w.Body.Reset() // 再次测试前重置 body
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 10)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"发送短信失败, 错误内容 : FailMessage\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"发送短信失败, 错误内容 : FailMessage\"}")
 
 		// 配置 httpmock 返回 发送成功的 Json
 		// https://cloud.tencent.com/document/product/382/38770
@@ -485,7 +486,7 @@ func Test_sendVerificationCodeByTencentCloudSMSV2(t *testing.T) {
 		w.Body.Reset()                                            // 再次测试前重置 body
 		c.Request, _ = http.NewRequest(http.MethodPost, "/", nil) // 初始化 Request 避免 c.ClientIP() 出现空指针错误
 		sendVerificationCodeByTencentCloudSMSV2(c, "", 0, 10)
-		So(w.Body.String(), ShouldEqual, "{\"Msg\":\"Success\"}")
+		So(w.Body.String(), ShouldEqual, "{\"Message\":\"Success\"}")
 
 		// 检查发送记录
 		singleSignOnVerificationCode := structs.SingleSignOnVerificationCode{}
@@ -669,8 +670,8 @@ func Test_ssoCreateSession(t *testing.T) {
 	})
 }
 
-// Test_ssoGetDefaultSuffix 测试 ssoGetDefaultSuffix 函数是否可以获取默认后缀配置
-func Test_ssoGetDefaultSuffix(t *testing.T) {
+// TestSSOGetDefaultSuffix 测试 SSOGetDefaultSuffix 函数是否可以获取默认后缀配置
+func TestSSOGetDefaultSuffix(t *testing.T) {
 	// 初始化测试数据
 	unitTestTool, _, _ := initTest()
 	// 函数推出时重置数据库
@@ -682,7 +683,7 @@ func Test_ssoGetDefaultSuffix(t *testing.T) {
 		session.Phone = "17887106666"
 		So(session.CRMChannel, ShouldEqual, 0)
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoGetDefaultSuffix(&session)
+		SSOGetDefaultSuffix(&session)
 		So(session.CRMChannel, ShouldEqual, 7)
 		So(session.CRMOCode, ShouldEqual, 2290)
 		So(session.CurrentSuffix, ShouldEqual, "default")
@@ -690,9 +691,9 @@ func Test_ssoGetDefaultSuffix(t *testing.T) {
 	})
 }
 
-// Test_ssoDistributionByPhoneNumber 测试 ssoDistributionByPhoneNumber 函数是否可以按照手机号码归属地进行归属分部分配
+// TestSSODistributionByPhoneNumber 测试 SSODistributionByPhoneNumber 函数是否可以按照手机号码归属地进行归属分部分配
 // 号段数据来自 http://www.bixinshui.com
-func Test_ssoDistributionByPhoneNumber(t *testing.T) {
+func TestSSODistributionByPhoneNumber(t *testing.T) {
 	// 初始化测试数据
 	unitTestTool, _, _ := initTest()
 	// 函数推出时重置数据库
@@ -706,77 +707,77 @@ func Test_ssoDistributionByPhoneNumber(t *testing.T) {
 		session.Phone = "9999"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldNotEqual, 0)
 
 		// 长春
 		session.Phone = "17887106666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2290)
 
 		// 吉林
 		session.Phone = "13009156666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2305)
 
 		// 延边
 		session.Phone = "18943306666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2277)
 
 		// 通化
 		session.Phone = "13009196666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2271)
 
 		// 白山
 		session.Phone = "13009076666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2310)
 
 		// 四平
 		session.Phone = "13009026666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2263)
 
 		// 松原
 		session.Phone = "13009056666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2284)
 
 		// 白城
 		session.Phone = "13009066666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2315)
 
 		// 辽源
 		session.Phone = "13009046666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldEqual, 2268)
 
 		// 外省
 		session.Phone = "13384736666"
 		session.CRMOCode = 0
 		So(session.CRMOCode, ShouldEqual, 0)
-		ssoDistributionByPhoneNumber(&session)
+		SSODistributionByPhoneNumber(&session)
 		So(session.CRMOCode, ShouldNotEqual, 0)
 	})
 }
