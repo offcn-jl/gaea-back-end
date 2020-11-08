@@ -62,11 +62,6 @@ jobs:
           docker push ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
           docker push ${TKE_IMAGE_URL}:latest
 
-      - name: 配置 Kustomize
-        run: |
-          curl -o kustomize --location https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
-          chmod u+x ./kustomize
-
       - name: 配置 ~/.kube/config 用于连接 TKE 集群
         uses: TencentCloud/tke-cluster-credential-action@v1
         with:
@@ -75,11 +70,20 @@ jobs:
           tke_region: ${{ env.TKE_REGION }}
           cluster_id: ${{ env.TKE_CLUSTER_ID }}
 
-      - name: 切换到 TKE 上下文
+      - name: 切换 kubectl 到 TKE 上下文
         run: |
           kubectl config use-context ${TKE_CLUSTER_ID}-context-default
 
-      - name: 部署镜像到 TKE 上下文
+      - name: 部署镜像到 TKE
+        # https://github.com/offcn-jl/gaea-back-end/new/main?filename=.github%2Fworkflows%2Ftencent.yml&workflow_template=tencent
+        # 未开启 TKE 集群的 APIServer 外网访问将会导致报错 Unable to connect to the server: dial tcp: lookup cls-2ferrnvh.ccs.tencent-cloud.com on 127.0.0.53:53: no such host
+        # 解决方法:
+        # 是开启外网访问, 并配置 CIDR
+        # CIDR 可以参考 https://docs.github.com/cn/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#ip-%E5%9C%B0%E5%9D%80
+        # 工作负载的配置更新后, 长时间卡 Pending 的原因是: 主机没有访问其他区域私有镜像的权限
+        # 解决方法:
+        # 集群 -> 配置管理 -> Secret -> 新建 -> Dockercfg -> 命名空间选择 default -> 填写 仓库域名、用户名、密码
+        # 集群 -> 工作负载 -> 更新Pod配置 -> 镜像访问凭证 -> 选择新建的访问凭证
         run: |
           kubectl set image deployment/${DEPLOYMENT_NAME} gaea-test=${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
           kubectl rollout status deployment/${DEPLOYMENT_NAME}
