@@ -577,8 +577,8 @@ func ssoCreateSession(session *structs.SingleSignOnSession) {
 	if session.CustomerIdentityID != 0 {
 		queryObject.Set("khsf", fmt.Sprint(session.CustomerIdentityID))
 	}
-	if session.CustomerColleage != "" {
-		queryObject.Set("colleage", session.CustomerColleage)
+	if session.CustomerCollage != "" {
+		queryObject.Set("colleage", session.CustomerCollage)
 	}
 	if session.CustomerMayor != "" {
 		queryObject.Set("mayor", session.CustomerMayor)
