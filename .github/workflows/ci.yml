@@ -4,6 +4,14 @@ on:
   push:
     branches: [ new-feature ]
 
+env:
+  TKE_REGISTRY: hkccr.ccs.tencentyun.com
+  TKE_IMAGE_URL: hkccr.ccs.tencentyun.com/gaea/back-end-test
+  TKE_REGION: ap-beijing
+  TKE_CLUSTER_ID: cls-2ferrnvh
+  DEPLOYMENT_NAME: gaea-test
+  CONTAINER_NAME: gaea-test
+
 jobs:
   ci:
     name: 进行持续集成
@@ -21,7 +29,8 @@ jobs:
           mysql -uroot -proot -e 'create database gaea_unit_test character set utf8mb4;'
 
       - name: 单元测试
-        run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+        # 禁用并发测试 https://studygolang.com/articles/12587
+        run: go test -p 1 ./... -race -coverprofile=coverage.txt -covermode=atomic
         env:
           UNIT_TEST_MYSQL_DSN_GAEA: "root:root@tcp(127.0.0.1:3306)/gaea_unit_test?charset=utf8mb4&parseTime=True&loc=Local"
 
@@ -41,13 +50,44 @@ jobs:
         # 不添加构建参数 CGO_ENABLED=0 会导致编译出的二进制程序无法在 alpine 中运行
         run: CGO_ENABLED=0 go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea
 
+      - name: 添加 phonedata 库的手机号归属地代码数据到 Docker 的上下文
+        run: cp /home/runner/go/pkg/mod/github.com/xluohome/phonedata@v0.0.0-20200423024337-2be14779ab82/phone.dat ./
+
       - name: 构建镜像
         run: |
-          docker build -t "ccr.ccs.tencentyun.com/gaea/back-end-test:${GITHUB_SHA:0:7}" .
-          docker tag "ccr.ccs.tencentyun.com/gaea/back-end-test:${GITHUB_SHA:0:7}" "ccr.ccs.tencentyun.com/gaea/back-end-test:latest"
+          docker build -t ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7} .
+          docker tag ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7} ${TKE_IMAGE_URL}:latest
 
       - name: 推送镜像
         run: |
-          docker login -u ${{secrets.DOCKER_HUB_USER}} -p ${{secrets.DOCKER_HUB_PASSWORD}} ccr.ccs.tencentyun.com
-          docker push "ccr.ccs.tencentyun.com/gaea/back-end-test:${GITHUB_SHA:0:7}"
-          docker push "ccr.ccs.tencentyun.com/gaea/back-end-test:latest"
+          docker login -u ${{secrets.TKE_REGISTRY_USER}} -p ${{secrets.TKE_REGISTRY_PASSWORD}} ${TKE_REGISTRY}
+          docker push ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
+          docker push ${TKE_IMAGE_URL}:latest
+
+      - name: 配置 ~/.kube/config 用于连接 TKE 集群
+        uses: TencentCloud/tke-cluster-credential-action@v1
+        with:
+          secret_id: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+          secret_key: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+          tke_region: ${{ env.TKE_REGION }}
+          cluster_id: ${{ env.TKE_CLUSTER_ID }}
+
+      - name: 切换 kubectl 到 TKE 上下文
+        run: |
+          kubectl config use-context ${TKE_CLUSTER_ID}-context-default
+
+      - name: 更新 TKE 中工作节点的镜像
+        # 更新命令参考 https://www.cnblogs.com/lovelinux199075/p/11246139.html
+        # https://github.com/offcn-jl/gaea-back-end/new/main?filename=.github%2Fworkflows%2Ftencent.yml&workflow_template=tencent
+        # 未开启 TKE 集群的 APIServer 外网访问将会导致报错 Unable to connect to the server: dial tcp: lookup cls-2ferrnvh.ccs.tencent-cloud.com on 127.0.0.53:53: no such host
+        # 解决方法:
+        # 是开启外网访问, 并配置 CIDR
+        # CIDR 可以参考 https://docs.github.com/cn/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#ip-%E5%9C%B0%E5%9D%80
+        # 工作负载的配置更新后, 长时间卡 Pending 的原因是: 主机没有访问其他区域私有镜像的权限
+        # 解决方法:
+        # 集群 -> 配置管理 -> Secret -> 新建 -> Dockercfg -> 命名空间选择 default -> 填写 仓库域名、用户名、密码
+        # 集群 -> 工作负载 -> 更新Pod配置 -> 镜像访问凭证 -> 选择新建的访问凭证
+        run: |
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
+          kubectl rollout status deployment/${DEPLOYMENT_NAME}
+          kubectl get services -o wide

@@ -1,10 +1,9 @@
 # 第三代哈士齐营销平台 ( Gaea ) 后端
-[![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT) [![Go Report Card](https://goreportcard.com/badge/github.com/offcn-jl/gaea-back-end)](https://goreportcard.com/report/github.com/offcn-jl/gaea-back-end) [![持续交付](https://github.com/offcn-jl/gaea-back-end/workflows/%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98/badge.svg)](https://github.com/offcn-jl/gaea-back-end/actions?query=workflow%3A%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98) [![codecov](https://codecov.io/gh/offcn-jl/gaea-back-end/branch/main/graph/badge.svg)](https://codecov.io/gh/offcn-jl/gaea-back-end) [![持续集成](https://github.com/offcn-jl/gaea-back-end/workflows/%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90/badge.svg)](https://github.com/offcn-jl/gaea-back-end/actions?query=workflow%3A%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90) [![codecov](https://codecov.io/gh/offcn-jl/gaea-back-end/branch/new-feature/graph/badge.svg)](https://codecov.io/gh/offcn-jl/gaea-back-end/branch/new-feature) 
+[![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT) [![Go Report Card](https://goreportcard.com/badge/github.com/offcn-jl/gaea-back-end)](https://goreportcard.com/report/github.com/offcn-jl/gaea-back-end) [![持续交付](https://github.com/offcn-jl/gaea-back-end/workflows/CD/badge.svg)](https://github.com/offcn-jl/gaea-back-end/actions?query=workflow%3ACD) [![codecov](https://codecov.io/gh/offcn-jl/gaea-back-end/branch/main/graph/badge.svg)](https://codecov.io/gh/offcn-jl/gaea-back-end) [![持续集成](https://github.com/offcn-jl/gaea-back-end/workflows/CI/badge.svg)](https://github.com/offcn-jl/gaea-back-end/actions?query=workflow%3ACI) [![codecov](https://codecov.io/gh/offcn-jl/gaea-back-end/branch/new-feature/graph/badge.svg)](https://codecov.io/gh/offcn-jl/gaea-back-end/branch/new-feature) 
 
 ## 待办列表
 
 ### 基础架构
- - [ ] 完善 README
  - [ ] 完善单元测试 与 http 请求及响应有关的部分
  - [ ] 屏蔽 腾讯云API网关 的健康检查产生的无用的 HEAD 日志
 

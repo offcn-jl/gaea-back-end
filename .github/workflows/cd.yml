@@ -4,6 +4,14 @@ on:
   push:
     branches: [ main ]
 
+env:
+  TKE_REGISTRY: hkccr.ccs.tencentyun.com
+  TKE_IMAGE_URL: hkccr.ccs.tencentyun.com/gaea/back-end
+  TKE_REGION: ap-beijing
+  TKE_CLUSTER_ID: cls-2ferrnvh
+  DEPLOYMENT_NAME: gaea
+  CONTAINER_NAME: gaea
+
 jobs:
   ci:
     name: 进行持续交付
@@ -13,15 +21,13 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v2
 
-      # https://github.community/t/github-actions-cant-connect-to-mysql/17885
-      # https://github.blog/changelog/2020-02-21-github-actions-breaking-change-ubuntu-virtual-environments-will-no-longer-start-the-mysql-service-automatically/
       - name: 启动系统自带 MySQL
         run: |
           sudo /etc/init.d/mysql start
           mysql -uroot -proot -e 'create database gaea_unit_test character set utf8mb4;'
 
       - name: 单元测试
-        run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+        run: go test -p 1 ./... -race -coverprofile=coverage.txt -covermode=atomic
         env:
           UNIT_TEST_MYSQL_DSN_GAEA: "root:root@tcp(127.0.0.1:3306)/gaea_unit_test?charset=utf8mb4&parseTime=True&loc=Local"
 
@@ -30,24 +36,42 @@ jobs:
         with:
           token: ${{secrets.CODECOV_TOKEN}}
 
-      # 如果不修正时区，会导致后续交叉编译步骤中，注入程序的版本号中的时间不正确
-      # https://blog.csdn.net/xo19882011/article/details/83789702
       - name: 修正构建环境的时区
         run: |
           sudo rm /etc/localtime
           sudo ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
       - name: 交叉编译
-        # 不添加构建参数 CGO_ENABLED=0 会导致编译出的二进制程序无法在 alpine 中运行
         run: CGO_ENABLED=0 go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea
+
+      - name: 添加 phonedata 库的手机号归属地代码数据到 Docker 的上下文
+        run: cp /home/runner/go/pkg/mod/github.com/xluohome/phonedata@v0.0.0-20200423024337-2be14779ab82/phone.dat ./
 
       - name: 构建镜像
         run: |
-          docker build -t "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}" .
-          docker tag "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}" "ccr.ccs.tencentyun.com/gaea/back-end:latest"
+          docker build -t ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7} .
+          docker tag ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7} ${TKE_IMAGE_URL}:latest
 
       - name: 推送镜像
         run: |
-          docker login -u ${{secrets.DOCKER_HUB_USER}} -p ${{secrets.DOCKER_HUB_PASSWORD}} ccr.ccs.tencentyun.com
-          docker push "ccr.ccs.tencentyun.com/gaea/back-end:${GITHUB_SHA:0:7}"
-          docker push "ccr.ccs.tencentyun.com/gaea/back-end:latest"
+          docker login -u ${{secrets.TKE_REGISTRY_USER}} -p ${{secrets.TKE_REGISTRY_PASSWORD}} ${TKE_REGISTRY}
+          docker push ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
+          docker push ${TKE_IMAGE_URL}:latest
+
+      - name: 配置 ~/.kube/config 用于连接 TKE 集群
+        uses: TencentCloud/tke-cluster-credential-action@v1
+        with:
+          secret_id: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+          secret_key: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+          tke_region: ${{ env.TKE_REGION }}
+          cluster_id: ${{ env.TKE_CLUSTER_ID }}
+
+      - name: 切换 kubectl 到 TKE 上下文
+        run: |
+          kubectl config use-context ${TKE_CLUSTER_ID}-context-default
+
+      - name: 更新 TKE 中工作节点的镜像
+        run: |
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
+          kubectl rollout status deployment/${DEPLOYMENT_NAME}
+          kubectl get services -o wide

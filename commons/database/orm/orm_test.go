@@ -4,11 +4,14 @@
    @Email : master@rebeta.cn
    @File : orm_test
    @Software: GoLand
+   @Description: ORM 组件 单元测试
 */
 
 package orm
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/offcn-jl/gaea-back-end/commons"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
@@ -18,6 +21,38 @@ import (
 	"testing"
 	"time"
 )
+
+var unitTestTool = commons.UnitTestTool{}
+
+// 实现 driver.Valuer 接口 供 TestCustomGormLogFormatter 使用
+type testVal struct{ val interface{} }
+
+func (u testVal) Value() (driver.Value, error) { return u.val, nil }
+
+// TestCustomGormLogFormatter 测试自定义的 Gorm LogFormatter
+func TestCustomGormLogFormatter(t *testing.T) {
+	Convey("测试自定义的 Gorm LogFormatter", t, func() {
+		// 测试 普通日志
+		logs := gorm.LogFormatter("日志级别", "日志内容")
+		So(fmt.Sprint(logs), ShouldContainSubstring, "日志内容")
+
+		// 测试 ? 形式的构造参数
+		logs = gorm.LogFormatter("sql", "调用方源码路径及代码的行数", time.Now().Sub(time.Now().Add(-1*time.Second)), "参数 ?" /* 带有 ? SQL 语句 */, []interface{}{"参数1"} /* SQL 语句的构造参数 */, int64(0) /* 受影响的行数 */)
+		So(fmt.Sprint(logs), ShouldContainSubstring, "参数 '参数1'")
+
+		// 测试 $n 形式的构造参数 ( n 从 1 开始 $0 不会进行替换 )
+		logs = gorm.LogFormatter("sql", "调用方源码路径及代码的行数", time.Now().Sub(time.Now().Add(-1*time.Second)), "参数 $0 $1" /* 带有 $n 的 SQL 语句 */, []interface{}{"参数1", "参数2"} /* SQL 语句的构造参数 */, int64(0) /* 受影响的行数 */)
+		So(fmt.Sprint(logs), ShouldContainSubstring, "参数 $0 '参数1'")
+
+		// 测试 非法 构造参数
+		logs = gorm.LogFormatter("sql", "调用方源码路径及代码的行数", time.Now().Sub(time.Now().Add(-1*time.Second)), "", []interface{}{nil} /* SQL 语句的构造参数 */, int64(0) /* 受影响的行数 */)
+		So(fmt.Sprint(logs), ShouldContainSubstring, "NULL")
+
+		// 测试 各种类型的构造参数
+		logs = gorm.LogFormatter("sql", "调用方源码路径及代码的行数", time.Now().Sub(time.Now().Add(-1*time.Second)), "参数 ? ? ? ? ? ? ? ? ?" /* 带有 ? SQL 语句 */, []interface{}{time.Time{}, time.Unix(1604741402, 0).In(time.FixedZone("CST", 8*3600)), []byte("Byte 文字参数"), make([]byte, 10), testVal{"字符串 类型 driver.Value"}, testVal{nil}, 0} /* SQL 语句的构造参数 */, int64(0) /* 受影响的行数 */)
+		So(fmt.Sprint(logs), ShouldContainSubstring, " 参数 '0000-00-00 00:00:00' '2020-11-07 17:30:02' 'Byte 文字参数' '<binary>' '字符串 类型 driver.Value' NULL 0")
+	})
+}
 
 // Test_autoMigrate 测试 autoMigrate 函数是否可以完成表结构自动迁移
 func Test_autoMigrate(t *testing.T) {
@@ -61,7 +96,8 @@ func Test_autoMigrate(t *testing.T) {
 	})
 
 	// 在程序结束时重置数据库
-	commons.TestToolRestORM(MySQL.Gaea)
+	unitTestTool.ORM = MySQL.Gaea
+	unitTestTool.CloseORM()
 }
 
 // TestInit 测试 Init 函数是否能够完成初始化数据库
@@ -103,5 +139,6 @@ func TestInit(t *testing.T) {
 	})
 
 	// 在程序结束时重置数据库
-	commons.TestToolRestORM(MySQL.Gaea)
+	unitTestTool.ORM = MySQL.Gaea
+	unitTestTool.CloseORM()
 }

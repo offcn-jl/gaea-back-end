@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : main
    @Software: GoLand
+   @Description: 入口函数及主程序初始化逻辑
 */
 
 package main
