@@ -161,7 +161,7 @@ func Init() error {
 // autoMigrate 可以完成表结构自动迁移
 func autoMigrate() {
 	MySQL.Gaea.AutoMigrate(
-		// system 系统
+		// System 系统
 		&structs.SystemConfig{},
 		// SingleSignOn 单点登陆
 		structs.SingleSignOnLoginModule{},
@@ -172,5 +172,6 @@ func autoMigrate() {
 		structs.SingleSignOnOrganization{},
 		structs.SingleSignOnCRMRoundLog{},
 		structs.SingleSignOnErrorLog{},
+		structs.SingleSignOnPushLog{},
 	)
 }
