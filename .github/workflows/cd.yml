@@ -54,7 +54,7 @@ jobs:
 
       - name: 推送镜像
         run: |
-          docker login -u ${{secrets.TKE_REGISTRY_USER}} -p ${{secrets.TKE_REGISTRY_PASSWORD}} ${{secrets.TKE_REGISTRY}}
+          docker login -u ${{secrets.TKE_REGISTRY_USER}} -p ${{secrets.TKE_REGISTRY_PASSWORD}} ${TKE_REGISTRY}
           docker push ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
           docker push ${TKE_IMAGE_URL}:latest
 
