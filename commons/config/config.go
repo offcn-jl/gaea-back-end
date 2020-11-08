@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : config
    @Software: GoLand
+   @Description: 配置组件
 */
 
 package config

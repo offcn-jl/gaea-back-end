@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : verify
    @Software: GoLand
+   @Description: 验证工具
 */
 
 package commons

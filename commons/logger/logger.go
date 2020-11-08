@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : logger
    @Software: GoLand
+   @Description: 日志组件
 */
 
 package logger

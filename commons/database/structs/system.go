@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : system
    @Software: GoLand
+   @Description: 结构体 系统
 */
 
 package structs

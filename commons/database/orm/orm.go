@@ -4,6 +4,7 @@
    @Email : master@rebeta.cn
    @File : orm
    @Software: GoLand
+   @Description: ORM 组件
 */
 
 package orm
