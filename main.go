@@ -35,10 +35,6 @@ func init() {
 		// 抛出异常
 		logger.Panic(err)
 	}
-	// 在程序结束时关闭数据库
-	defer func() {
-		orm.MySQL.Gaea.Close()
-	}()
 
 	// 初始化系统配置
 	if err := config.Init(orm.MySQL.Gaea); err != nil {
@@ -54,6 +50,9 @@ func init() {
 
 // main 入口
 func main() {
+	// 在入口程序结束时关闭数据库连接
+	defer func() { orm.MySQL.Gaea.Close() }()
+
 	// 定义基础路径
 	mode := "/release"
 	// 判断运行环境, 如果不是 release 则修改基础路径为 /test
