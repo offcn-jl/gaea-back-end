@@ -17,7 +17,7 @@ type SingleSignOnLoginModule struct {
 	CreatedUserID uint   `gorm:"not null"`                                                   // 创建用户 ID
 	UpdatedUserID uint   `gorm:"not null"`                                                   // 最终修改用户 ID
 	CRMEID        string `gorm:"not null;column:crm_eid" json:"EID" binding:"required"`      // CRM 活动编码
-	CRMEFID       string `gorm:"not null;column:crm_ef_id" json:"EFID" binding:"required"`   // CRM 活动表单 ID
+	CRMEFID       uint   `gorm:"not null;column:crm_ef_id" json:"EFID" binding:"required"`   // CRM 活动表单 ID
 	CRMEFSID      string `gorm:"not null;column:crm_ef_sid" json:"EFSID" binding:"required"` // CRM 活动表单 SID
 	Term          uint   `gorm:"not null" json:"Term" binding:"required"`                    // 验证码有效期, 分钟
 	Platform      uint   `gorm:"not null" json:"Platform" binding:"required"`                // 发信平台
@@ -70,7 +70,7 @@ type SingleSignOnSuffix struct {
 	gorm.Model
 	CreatedUserID uint   `gorm:"not null"`                                                         // 创建用户 ID
 	UpdatedUserID uint   `gorm:"not null"`                                                         // 最终修改用户 ID
-	Suffix        string `gorm:"not null;primaryKey" json:"Suffix" binding:"required"`             // 后缀 ( 19课堂 个人后缀 ), 为了避免重复, 设置为主键
+	Suffix        string `gorm:"not null;unique" json:"Suffix" binding:"required"`                 // 后缀 ( 19课堂 个人后缀 ), 为了避免重复, 设置为主键
 	Name          string `gorm:"not null" json:"Name" binding:"required"`                          // 后缀名称
 	CRMUser       string `gorm:"not null" json:"CRMUser" binding:"required"`                       // CRM 用户名
 	CRMUID        uint   `gorm:"not null" json:"CRMUID" binding:"required"`                        // CRM 用户ID

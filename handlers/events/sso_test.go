@@ -211,7 +211,7 @@ func TestSSOGetSessionInfo(t *testing.T) {
 		unitTestTool.GinTestContext.Params = gin.Params{gin.Param{Key: "Phone", Value: "17887106666"}, gin.Param{Key: "MID", Value: "10001"}}
 
 		Convey("测试 后缀不存在或错误", func() {
-			defaultInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":7,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":32431,\"CRMUser\":\"default\",\"Suffix\":\"default\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
+			defaultInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":56975,\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":7,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":32431,\"CRMUser\":\"default\",\"Suffix\":\"default\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
 			// 此时未配置后缀, 即后缀不存在, 可以认为等同为后缀错误
 			unitTestTool.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
 			SSOSessionInfo(unitTestTool.GinTestContext)
@@ -231,8 +231,8 @@ func TestSSOGetSessionInfo(t *testing.T) {
 		})
 
 		Convey("测试 配置了后缀 是否可以获取到后缀对应的信息", func() {
-			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
-			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
+			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":56975,\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
+			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":56975,\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"test\",\"Suffix\":\"test\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
 			// 配置后缀为测试后缀
 			unitTestTool.GinTestContext.Params = gin.Params{gin.Param{Key: "Phone", Value: "17887106666"}, gin.Param{Key: "MID", Value: "10001"}, gin.Param{Key: "Suffix", Value: "test"}}
 			unitTestTool.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
@@ -253,8 +253,8 @@ func TestSSOGetSessionInfo(t *testing.T) {
 		})
 
 		Convey("测试 配置了已经过期的后缀 是否依旧可以获取到后缀对应的信息", func() {
-			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
-			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":\"56975\",\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
+			testInfo := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":56975,\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":2290,\"CRMOName\":\"吉林长春分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
+			testInfoWithDefauleOrgnation := "{\"Data\":{\"Sign\":\"中公教育\",\"CRMEID\":\"HD202010142576\",\"CRMEFID\":56975,\"CRMEFSID\":\"f905e07b2bff94d564ac1fa41022a633\",\"CRMChannel\":22,\"CRMOCode\":22,\"CRMOName\":\"吉林分校\",\"CRMUID\":123,\"CRMUser\":\"expired\",\"Suffix\":\"expired\",\"NTalkerGID\":\"NTalkerGID\",\"IsLogin\":false,\"NeedToRegister\":true},\"Message\":\"Success\"}"
 			// 配置后缀为过期后缀
 			unitTestTool.GinTestContext.Params = gin.Params{gin.Param{Key: "Phone", Value: "17887106666"}, gin.Param{Key: "MID", Value: "10001"}, gin.Param{Key: "Suffix", Value: "expired"}}
 			unitTestTool.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body

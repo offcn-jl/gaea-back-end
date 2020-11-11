@@ -101,7 +101,7 @@ func InitTest() (unitTestTool UnitTestTool) {
 	unitTestTool.ORM.Create(&structs.SingleSignOnSuffix{Model: gorm.Model{ID: 3, DeletedAt: &tmpTime}, Suffix: "expired", CRMUser: "expired", CRMUID: 123 /* 高** */, CRMOID: 2 /* 吉林长春分校 */, CRMChannel: 22 /* 户外推广 ( 市场 ) */, NTalkerGID: "NTalkerGID"})
 
 	// 登陆模块信息
-	unitTestTool.ORM.Create(&structs.SingleSignOnLoginModule{Model: gorm.Model{ID: 10001}, CRMEID: "HD202010142576", CRMEFID: "56975", CRMEFSID: "f905e07b2bff94d564ac1fa41022a633", Sign: "中公教育"})
+	unitTestTool.ORM.Create(&structs.SingleSignOnLoginModule{Model: gorm.Model{ID: 10001}, CRMEID: "HD202010142576", CRMEFID: 56975, CRMEFSID: "f905e07b2bff94d564ac1fa41022a633", Sign: "中公教育"})
 
 	// 单点登陆用户
 	unitTestTool.ORM.Create(&structs.SingleSignOnUser{Phone: "17888666688"})

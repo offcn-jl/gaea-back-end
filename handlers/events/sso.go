@@ -179,7 +179,7 @@ func SSOSessionInfo(c *gin.Context) {
 	response := struct {
 		Sign           string // 发信签名
 		CRMEID         string // CRM 活动 ID
-		CRMEFID        string // CRM 活动表单 ID
+		CRMEFID        uint   // CRM 活动表单 ID
 		CRMEFSID       string // CRM 活动表单 SID
 		CRMChannel     uint   // CRM 所属渠道
 		CRMOCode       uint   // CRM 组织代码
