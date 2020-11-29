@@ -30,7 +30,7 @@ func TestGetMiniProgramAccessToken(t *testing.T) {
 		utt.GinTestContext.Request, _ = http.NewRequest("GET", "", nil)
 
 		// 修改请求上下文, 修改为非生产环境的请求
-		utt.GinTestContext.Request.Host = "https://fake.request"
+		utt.GinTestContext.Request.Host = "fake.request"
 		utt.GinTestContext.Request.RequestURI = "/test/services/authentication/mini-program/get/access-token?access-token=fake-access-token&app-id=fake-app-id"
 
 		// 配置 httpmock 拦截发送到生产环境的请求
@@ -40,12 +40,12 @@ func TestGetMiniProgramAccessToken(t *testing.T) {
 		// 测试调用生产环境，但是发送请求失败的情况
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		GetMiniProgramAccessToken(utt.GinTestContext)
-		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Get \\\"https://fake.request/release/services/authentication/mini-program/get/access-token?access-token=fake-access-token\\u0026app-id=fake-app-id\\\": no responder found\",\"Message\":\"发送请求失败\"}")
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Get \\\"http://fake.request/release/services/authentication/mini-program/get/access-token?access-token=fake-access-token\\u0026app-id=fake-app-id\\\": no responder found\",\"Message\":\"发送请求失败\"}")
 
 		// 配置 httpmock 返回无法读取的 body  todo 暂时无法测试
 
 		// 配置 httpmock 返回响应
-		httpmock.RegisterResponder(http.MethodGet, "https://fake.request/release/services/authentication/mini-program/get/access-token?access-token=fake-access-token&app-id=fake-app-id", httpmock.NewStringResponder(http.StatusOK, "生产环境的响应"))
+		httpmock.RegisterResponder(http.MethodGet, "http://fake.request/release/services/authentication/mini-program/get/access-token?access-token=fake-access-token&app-id=fake-app-id", httpmock.NewStringResponder(http.StatusOK, "生产环境的响应"))
 
 		// 测试调用生产环境
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
@@ -61,7 +61,7 @@ func TestGetMiniProgramAccessToken(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Key: 'AccessToken' Error:Field validation for 'AccessToken' failed on the 'required' tag\\nKey: 'AppID' Error:Field validation for 'AppID' failed on the 'required' tag\",\"Message\":\"提交的 Query 查询不正确\"}")
 
 		// 修改请求上下文, 修改为正确的生产环境的请求
-		utt.GinTestContext.Request, _ = http.NewRequest("GET", "https://fake.request/release/services/authentication/mini-program/get/access-token?access-token=fake-access-token&app-id=fake-app-id", nil)
+		utt.GinTestContext.Request, _ = http.NewRequest("GET", "http://fake.request/release/services/authentication/mini-program/get/access-token?access-token=fake-access-token&app-id=fake-app-id", nil)
 		utt.GinTestContext.Request.RequestURI = "/release/services/authentication/mini-program/get/access-token"
 
 		// 测试校验 AccessToken 不合法
