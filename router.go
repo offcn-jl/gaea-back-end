@@ -12,7 +12,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
-	"github.com/offcn-jl/gaea-back-end/commons/responses"
+	"github.com/offcn-jl/gaea-back-end/commons/response"
 	"github.com/offcn-jl/gaea-back-end/handlers/events"
 	"github.com/offcn-jl/gaea-back-end/handlers/services"
 	"net/http"
@@ -42,7 +42,7 @@ func initRouter(basePath string) *gin.Engine {
 
 		// 不是标准路径
 		if len(strings.Split(c.Request.URL.Path, "/")) < 3 {
-			c.AbortWithStatusJSON(http.StatusNotFound, responses.Message("路径有误"))
+			c.AbortWithStatusJSON(http.StatusNotFound, response.Message("路径有误"))
 			return
 		}
 
@@ -56,7 +56,7 @@ func initRouter(basePath string) *gin.Engine {
 		case "events":
 			allowOrigins = config.Get().CORSRuleEvents
 		default:
-			c.AbortWithStatusJSON(http.StatusNotFound, responses.Message("路径有误"))
+			c.AbortWithStatusJSON(http.StatusNotFound, response.Message("路径有误"))
 			return
 		}
 
@@ -76,7 +76,7 @@ func initRouter(basePath string) *gin.Engine {
 
 		// 未通过检查
 		if !pass {
-			c.AbortWithStatusJSON(http.StatusForbidden, responses.Message("请求未通过跨域检查"))
+			c.AbortWithStatusJSON(http.StatusForbidden, response.Message("请求未通过跨域检查"))
 			return
 		}
 
@@ -112,6 +112,13 @@ func initRouter(basePath string) *gin.Engine {
 			// 推送信息到 CRM
 			personalSuffixGroup.POST("/push/crm", services.SuffixPushCRM)
 		}
+
+		// 认证服务
+		authenticationGroup := servicesGroup.Group("/authentication")
+		{
+			// 获取微信小程序 AccessToken
+			authenticationGroup.GET("/mini-program/get/access-token", services.GetMiniProgramAccessToken)
+		}
 	}
 
 	// 管理平台
@@ -144,7 +151,7 @@ func initRouter(basePath string) *gin.Engine {
 
 	// 未匹配到路由的路径返回统一的 404 响应
 	router.Use(func(c *gin.Context) {
-		c.AbortWithStatusJSON(http.StatusNotFound, responses.Message("路径有误"))
+		c.AbortWithStatusJSON(http.StatusNotFound, response.Message("路径有误"))
 	})
 
 	return router

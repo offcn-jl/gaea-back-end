@@ -12,11 +12,11 @@ package services
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/offcn-jl/gaea-back-end/commons"
 	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
 	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
 	"github.com/offcn-jl/gaea-back-end/commons/logger"
-	"github.com/offcn-jl/gaea-back-end/commons/responses"
+	"github.com/offcn-jl/gaea-back-end/commons/response"
+	"github.com/offcn-jl/gaea-back-end/commons/verify"
 	"github.com/offcn-jl/gaea-back-end/handlers/events"
 	"net/http"
 	"net/url"
@@ -27,7 +27,7 @@ import (
 func SuffixGetActive(c *gin.Context) {
 	if rows, err := orm.MySQL.Gaea.Raw("SELECT suffixes.id,suffixes.suffix,suffixes.`name`,suffixes.crm_user,suffixes.crm_uid,suffixes.crm_channel,suffixes.ntalker_gid,organizations.id,organizations.f_id,organizations.`code`,organizations.`name` FROM single_sign_on_suffixes AS suffixes,single_sign_on_organizations AS organizations WHERE suffixes.deleted_at IS NULL AND suffixes.crm_oid=organizations.id").Order("suffixes.id ASC").Rows(); err != nil {
 		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, responses.Error("执行 SQL 查询出错", err))
+		c.JSON(http.StatusInternalServerError, response.Error("执行 SQL 查询出错", err))
 	} else {
 		type Result struct {
 			ID         uint   // 后缀 ID
@@ -65,7 +65,7 @@ func SuffixGetActive(c *gin.Context) {
 		if err := rows.Close(); err != nil {
 			logger.Error(err)
 		}
-		c.JSON(http.StatusOK, responses.Data(results))
+		c.JSON(http.StatusOK, response.Data(results))
 	}
 }
 
@@ -73,7 +73,7 @@ func SuffixGetActive(c *gin.Context) {
 func SuffixGetDeleting(c *gin.Context) {
 	if rows, err := orm.MySQL.Gaea.Raw("SELECT suffixes.id,suffixes.deleted_at,suffixes.suffix,suffixes.`name`,suffixes.crm_user,suffixes.crm_uid,suffixes.crm_channel,suffixes.ntalker_gid,organizations.id,organizations.f_id,organizations.`code`,organizations.`name` FROM single_sign_on_suffixes AS suffixes,single_sign_on_organizations AS organizations WHERE suffixes.deleted_at> NOW() AND suffixes.crm_oid=organizations.id").Order("suffixes.id ASC").Rows(); err != nil {
 		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, responses.Error("执行 SQL 查询出错", err))
+		c.JSON(http.StatusInternalServerError, response.Error("执行 SQL 查询出错", err))
 	} else {
 		type Result struct {
 			ID         uint      // 后缀 ID
@@ -113,7 +113,7 @@ func SuffixGetDeleting(c *gin.Context) {
 		if err := rows.Close(); err != nil {
 			logger.Error(err)
 		}
-		c.JSON(http.StatusOK, responses.Data(results))
+		c.JSON(http.StatusOK, response.Data(results))
 	}
 }
 
@@ -121,7 +121,7 @@ func SuffixGetDeleting(c *gin.Context) {
 func SuffixGetAvailable(c *gin.Context) {
 	if rows, err := orm.MySQL.Gaea.Raw("SELECT suffixes.id,suffixes.suffix,suffixes.`name`,suffixes.crm_user,suffixes.crm_uid,suffixes.crm_channel,suffixes.ntalker_gid,organizations.id,organizations.f_id,organizations.`code`,organizations.`name` FROM single_sign_on_suffixes AS suffixes,single_sign_on_organizations AS organizations WHERE suffixes.crm_oid=organizations.id").Order("suffixes.id ASC").Rows(); err != nil {
 		logger.Error(err)
-		c.JSON(http.StatusInternalServerError, responses.Error("执行 SQL 查询出错", err))
+		c.JSON(http.StatusInternalServerError, response.Error("执行 SQL 查询出错", err))
 	} else {
 		type Result struct {
 			ID         uint   // 后缀 ID
@@ -159,7 +159,7 @@ func SuffixGetAvailable(c *gin.Context) {
 		if err := rows.Close(); err != nil {
 			logger.Error(err)
 		}
-		c.JSON(http.StatusOK, responses.Data(results))
+		c.JSON(http.StatusOK, response.Data(results))
 	}
 }
 
@@ -170,13 +170,13 @@ func SuffixPushCRM(c *gin.Context) {
 	if err := c.ShouldBindJSON(&pushInfo); err != nil {
 		// 绑定数据错误
 		logger.Error(err)
-		c.JSON(http.StatusBadRequest, responses.Json.Invalid(err))
+		c.JSON(http.StatusBadRequest, response.Json.Invalid(err))
 		return
 	}
 
 	// 验证手机号码是否有效
-	if !commons.Verify().Phone(pushInfo.Phone) {
-		c.JSON(http.StatusBadRequest, responses.Phone.Invalid)
+	if !verify.Phone(pushInfo.Phone) {
+		c.JSON(http.StatusBadRequest, response.Phone.Invalid)
 		return
 	}
 
@@ -185,7 +185,7 @@ func SuffixPushCRM(c *gin.Context) {
 	orm.MySQL.Gaea.Where("crm_ef_sid = ? AND phone = ?", pushInfo.CRMEFSID, pushInfo.Phone).Find(&pushInfo4Check)
 	if pushInfo4Check.ID != 0 {
 		// 已经进行过推送, 跳过后续步骤
-		c.JSON(http.StatusOK, responses.Success)
+		c.JSON(http.StatusOK, response.Success)
 		return
 	}
 
@@ -267,7 +267,7 @@ func SuffixPushCRM(c *gin.Context) {
 			CRMOCode:   pushInfo.CRMOCode,
 			Error:      "推送接口 > 请求失败 : " + err.Error(),
 		})
-		c.JSON(http.StatusInternalServerError, responses.Error("向 CRM 发起请求失败", err))
+		c.JSON(http.StatusInternalServerError, response.Error("向 CRM 发起请求失败", err))
 		return
 	} else {
 		if getResponse.StatusCode != 200 {
@@ -280,7 +280,7 @@ func SuffixPushCRM(c *gin.Context) {
 				CRMOCode:   pushInfo.CRMOCode,
 				Error:      "推送接口 > CRM 返回了错误的状态码 : " + fmt.Sprint(getResponse.StatusCode),
 			})
-			c.JSON(http.StatusInternalServerError, responses.Message("CRM 返回了错误的状态码 : "+fmt.Sprint(getResponse.StatusCode)))
+			c.JSON(http.StatusInternalServerError, response.Message("CRM 返回了错误的状态码 : "+fmt.Sprint(getResponse.StatusCode)))
 			return
 		}
 
@@ -288,6 +288,6 @@ func SuffixPushCRM(c *gin.Context) {
 		orm.MySQL.Gaea.Create(&pushInfo)
 
 		// 成功
-		c.JSON(http.StatusOK, responses.Success)
+		c.JSON(http.StatusOK, response.Success)
 	}
 }

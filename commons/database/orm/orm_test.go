@@ -13,16 +13,14 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/offcn-jl/gaea-back-end/commons"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
+	"github.com/offcn-jl/gaea-back-end/commons/utt"
 	. "github.com/smartystreets/goconvey/convey"
 	"os"
 	"testing"
 	"time"
 )
-
-var unitTestTool = commons.UnitTestTool{}
 
 // 实现 driver.Valuer 接口 供 TestCustomGormLogFormatter 使用
 type testVal struct{ val interface{} }
@@ -96,8 +94,8 @@ func Test_autoMigrate(t *testing.T) {
 	})
 
 	// 在程序结束时重置数据库
-	unitTestTool.ORM = MySQL.Gaea
-	unitTestTool.CloseORM()
+	utt.ORM = MySQL.Gaea
+	utt.CloseORM()
 }
 
 // TestInit 测试 Init 函数是否能够完成初始化数据库
@@ -139,6 +137,6 @@ func TestInit(t *testing.T) {
 	})
 
 	// 在程序结束时重置数据库
-	unitTestTool.ORM = MySQL.Gaea
-	unitTestTool.CloseORM()
+	utt.ORM = MySQL.Gaea
+	utt.CloseORM()
 }

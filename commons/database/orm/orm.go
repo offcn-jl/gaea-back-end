@@ -132,8 +132,6 @@ func Init() error {
 		// 未配置，返回错误
 		return errors.New("未配置 MYSQL_DSN_GAEA , 请在环境变量中配置 MYSQL_DSN_GAEA ( 例 : user:password@tcp(hostname)/database?charset=utf8mb4&parseTime=True&loc=Local )")
 	}
-	// 在调试模式时，输出环境变量中配置的 MYSQL_DSN_GAEA
-	logger.DebugToString("os.Getenv(\"MYSQL_DSN_GAEA\")", os.Getenv("MYSQL_DSN_GAEA"))
 	// 已配置, 初始化 MYSQL 客户端
 	var err error
 	if MySQL.Gaea, err = gorm.Open("mysql", os.Getenv("MYSQL_DSN_GAEA")); err != nil {
@@ -163,7 +161,7 @@ func Init() error {
 func autoMigrate() {
 	MySQL.Gaea.AutoMigrate(
 		// System 系统
-		&structs.SystemConfig{},
+		structs.SystemConfig{},
 		// SingleSignOn 单点登陆
 		structs.SingleSignOnLoginModule{},
 		structs.SingleSignOnVerificationCode{},
@@ -175,4 +173,12 @@ func autoMigrate() {
 		structs.SingleSignOnErrorLog{},
 		structs.SingleSignOnPushLog{},
 	)
+	// 判断运行环境, 如果是 release 则初始化仅在生产环境部署的表
+	if os.Getenv("GIN_MODE") == "release" {
+		MySQL.Gaea.AutoMigrate(
+			// MiniProgram 小程序
+			structs.MiniProgram{},
+			structs.MiniProgramAccessToken{},
+		)
+	}
 }
