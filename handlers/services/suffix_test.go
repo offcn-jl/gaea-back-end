@@ -34,6 +34,7 @@ func TestSuffixGetActive(t *testing.T) {
 		orm.MySQL.Gaea.Exec("RENAME TABLE single_sign_on_suffixes TO single_sign_on_suffixes_backup")
 
 		// 测试执行查询失败
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SuffixGetActive(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Error 1146: Table 'gaea_unit_test.single_sign_on_suffixes' doesn't exist\",\"Message\":\"执行 SQL 查询出错\"}")
 
