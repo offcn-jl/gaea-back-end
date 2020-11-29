@@ -33,11 +33,7 @@ func GetMiniProgramAccessToken(c *gin.Context) {
 	if c.Request.RequestURI[1:8] != "release" {
 		// 当前运行环境为非生产环境，将请求转发到生产环境
 		// 获取当前环境的域名或路径，然后修改 test 为 release 进行调用
-		scheme := "http://"
-		if c.Request.TLS != nil {
-			scheme = "https://"
-		}
-		if responseData, err := http.Get(scheme + c.Request.Host + "/release" + c.Request.RequestURI[1+strings.IndexAny(c.Request.RequestURI[1:], "/"):]); err != nil {
+		if responseData, err := http.Get("https://" + c.Request.Host + "/release" + c.Request.RequestURI[1+strings.IndexAny(c.Request.RequestURI[1:], "/"):]); err != nil {
 			// 发送 GET 请求出错
 			c.JSON(http.StatusInternalServerError, response.Error("发送请求失败", err))
 		} else {
