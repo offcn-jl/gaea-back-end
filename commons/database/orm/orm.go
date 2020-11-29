@@ -161,7 +161,7 @@ func Init() error {
 func autoMigrate() {
 	MySQL.Gaea.AutoMigrate(
 		// System 系统
-		&structs.SystemConfig{},
+		structs.SystemConfig{},
 		// SingleSignOn 单点登陆
 		structs.SingleSignOnLoginModule{},
 		structs.SingleSignOnVerificationCode{},
@@ -173,4 +173,12 @@ func autoMigrate() {
 		structs.SingleSignOnErrorLog{},
 		structs.SingleSignOnPushLog{},
 	)
+	// 判断运行环境, 如果是 release 则初始化仅在生产环境部署的表
+	if os.Getenv("GIN_MODE") == "release" {
+		MySQL.Gaea.AutoMigrate(
+			// MiniProgram 小程序
+			structs.MiniProgram{},
+			structs.MiniProgramAccessToken{},
+		)
+	}
 }

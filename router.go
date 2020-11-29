@@ -112,6 +112,13 @@ func initRouter(basePath string) *gin.Engine {
 			// 推送信息到 CRM
 			personalSuffixGroup.POST("/push/crm", services.SuffixPushCRM)
 		}
+
+		// 认证服务
+		authenticationGroup := servicesGroup.Group("/authentication")
+		{
+			// 获取微信小程序 AccessToken
+			authenticationGroup.GET("/mini-program/get/access-token", services.GetMiniProgramAccessToken)
+		}
 	}
 
 	// 管理平台

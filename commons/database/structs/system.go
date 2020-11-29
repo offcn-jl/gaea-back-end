@@ -30,4 +30,6 @@ type SystemConfig struct {
 	TencentCloudAPISecretID  string // 令牌
 	TencentCloudAPISecretKey string // 密钥
 	TencentCloudSmsSdkAppId  string // 短信应用 ID
+	// 内部服务相关配置
+	ServicesAccessToken string // 接口访问令牌
 }
