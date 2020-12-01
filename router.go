@@ -146,6 +146,9 @@ func initRouter(basePath string) *gin.Engine {
 
 			// 发送验证码
 			ssoGroup.POST("/verification-code/send/:MID/:Phone", events.SSOSendVerificationCode)
+
+			// 获取微信小程序个人后缀二维码
+			ssoGroup.GET("/wechat/mini-program/qr-code/suffix/:Suffix", events.SSOGetWechatMiniProgramQrCode)
 		}
 	}
 

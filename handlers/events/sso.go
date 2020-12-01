@@ -19,6 +19,7 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/logger"
 	"github.com/offcn-jl/gaea-back-end/commons/response"
 	"github.com/offcn-jl/gaea-back-end/commons/verify"
+	"github.com/offcn-jl/gaea-back-end/commons/wechat"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
@@ -31,6 +32,43 @@ import (
 	"net/url"
 	"time"
 )
+
+// SSOGetWechatMiniProgramQrCode 获取微信小程序个人后缀二维码
+func SSOGetWechatMiniProgramQrCode(c *gin.Context) {
+	// 绑定参数，并校验参数是否完整
+	miniProgramConfig := struct {
+		AppID string `form:"app-id" binding:"required"`
+		Page  string `form:"page" binding:"required"`
+	}{}
+	if err := c.ShouldBindQuery(&miniProgramConfig); err != nil {
+		// 绑定数据错误
+		logger.Error(err)
+		c.JSON(http.StatusBadRequest, response.Query.Invalid(err))
+		return
+	}
+
+	// 根据后缀取出后缀配置
+	suffixInfo := structs.SingleSignOnSuffix{}
+	orm.MySQL.Gaea.Where("suffix = ?", c.Param("Suffix")).Find(&suffixInfo)
+	// 校验后缀是否存在
+	if suffixInfo.ID == 0 {
+		c.JSON(http.StatusBadRequest, response.Message("个人后缀不正确"))
+		return
+	}
+
+	// 创建小程序码
+	if qrCodeBytes, err := wechat.MiniProgramCreateQrCode(miniProgramConfig.AppID, miniProgramConfig.Page, suffixInfo.Suffix, 200, true, map[string]uint{}, false); err != nil {
+		logger.Error(err)
+		c.JSON(http.StatusInternalServerError, response.Message("创建失败, "+err.Error()))
+	} else {
+		// 返回小程序码
+		c.Header("Content-Disposition", "attachment;filename=Wechat-MiniProgram-QrCode-"+suffixInfo.Suffix+".jpg") // 文件名称
+		c.Header("Cache-Control", "must-revalidate,post-check=0,pre-check=0")                                      // 缓存配置
+		c.Header("Expires", "0")                                                                                   // 缓存时间
+		c.Header("Pragma", "public")
+		c.Data(http.StatusOK, "image/jpeg", qrCodeBytes)
+	}
+}
 
 // SSOSendVerificationCode 单点登模块发送验证码接口的处理函数
 func SSOSendVerificationCode(c *gin.Context) {

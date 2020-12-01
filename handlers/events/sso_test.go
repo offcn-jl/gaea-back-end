@@ -30,11 +30,59 @@ func init() {
 	orm.MySQL.Gaea = utt.ORM
 }
 
+// TestSSOGetWechatMiniProgramQrCode 测试 SSOGetWechatMiniProgramQrCode 是否可以获取微信小程序个人后缀二维码
+func TestSSOGetWechatMiniProgramQrCode(t *testing.T) {
+	Convey("测试 SSOGetWechatMiniProgramQrCode 是否可以获取微信小程序个人后缀二维码", t, func() {
+		// 初始化 Request
+		utt.GinTestContext.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+
+		// 测试 未绑定 Query 数据
+		utt.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
+		SSOGetWechatMiniProgramQrCode(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Key: 'AppID' Error:Field validation for 'AppID' failed on the 'required' tag\\nKey: 'Page' Error:Field validation for 'Page' failed on the 'required' tag\",\"Message\":\"提交的 Query 查询不正确\"}")
+
+		// 重置 Request 添加 Query 参数
+		utt.GinTestContext.Request, _ = http.NewRequest(http.MethodGet, "/?app-id=fake-app-id&page=fake-page", nil)
+
+		// 测试后缀配置错误 ( 此时未配置后缀 )
+		utt.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
+		SSOGetWechatMiniProgramQrCode(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"个人后缀不正确\"}")
+
+		// 配置个人后缀参数
+		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "Suffix", Value: "default"}}
+
+		// 配置 httpmock 进行拦截
+		httpmock.Activate()
+		defer httpmock.DeactivateAndReset()
+
+		// 测试创建小程序码失败
+		utt.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
+		SSOGetWechatMiniProgramQrCode(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"创建失败, Get \\\"https://api.gaea.jilinoffcn.com/release/services/authentication/mini-program/get/access-token?access-token=\\u0026app-id=fake-app-id\\\": no responder found\"}")
+
+		// 配置 httpmock 返回, 返回小程序码的图片
+		httpmock.RegisterResponder(http.MethodGet, "https://api.gaea.jilinoffcn.com/release/services/authentication/mini-program/get/access-token", httpmock.NewStringResponder(http.StatusOK, "{\"Message\":\"Success\",\"Data\":\"fake-access-token\"}"))
+		fakeImage := make([]byte, 10)
+		httpmock.RegisterResponder(http.MethodPost, "https://api.weixin.qq.com/wxa/getwxacodeunlimit", httpmock.NewBytesResponder(http.StatusOK, fakeImage))
+
+		// 测试创建小程序码成功
+		utt.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
+		SSOGetWechatMiniProgramQrCode(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Header().Get("Content-Disposition"), ShouldEqual, "attachment;filename=Wechat-MiniProgram-QrCode-default.jpg")
+		So(utt.HttpTestResponseRecorder.Header().Get("Cache-Control"), ShouldEqual, "must-revalidate,post-check=0,pre-check=0")
+		So(utt.HttpTestResponseRecorder.Header().Get("Expires"), ShouldEqual, "0")
+		So(utt.HttpTestResponseRecorder.Header().Get("Pragma"), ShouldEqual, "public")
+		So(string(utt.HttpTestResponseRecorder.Body.Bytes()), ShouldEqual, string(fakeImage))
+	})
+}
+
 // TestSSOSendVerificationCode 测试 SSOSendVerificationCode 单点登模块发送验证码接口的处理函数
 func TestSSOSendVerificationCode(t *testing.T) {
 	// 函数推出时重置数据库
 	Convey("测试 SSOSendVerificationCode 单点登模块发送验证码接口的处理函数", t, func() {
 		// 测试 验证手机号码是否有效
+		utt.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
 		SSOSendVerificationCode(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"手机号码不正确\"}")
 
