@@ -36,11 +36,6 @@ func TestGetSendQueryReceiveBytes(t *testing.T) {
 		defer httpmock.DeactivateAndReset()
 		httpmock.RegisterResponder(http.MethodGet, "https://fake.request", httpmock.NewBytesResponder(http.StatusInternalServerError, nil))
 
-		// 测试返回错误的状态码
-		responseBytes, err = GetSendQueryReceiveBytes("https://fake.request", nil)
-		So(responseBytes, ShouldBeNil)
-		So(err.Error(), ShouldEqual, "发送 GET 请求出错. 状态码: 500")
-
 		// 调整 httpmock 返回正确的响应
 		httpmock.RegisterResponder(http.MethodGet, "https://fake.request", func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewStringResponse(http.StatusOK, req.URL.String()), nil
@@ -96,11 +91,6 @@ func TestPostSendJsonReceiveBytes(t *testing.T) {
 		httpmock.Activate()
 		defer httpmock.DeactivateAndReset()
 		httpmock.RegisterResponder(http.MethodPost, "https://fake.request", httpmock.NewBytesResponder(http.StatusInternalServerError, nil))
-
-		// 测试返回错误的状态码
-		responseBytes, err = PostSendJsonReceiveBytes("https://fake.request", nil)
-		So(responseBytes, ShouldBeNil)
-		So(err.Error(), ShouldEqual, "发送 POST 请求出错. 状态码: 500")
 
 		// 调整 httpmock 返回正确的响应
 		httpmock.RegisterResponder(http.MethodPost, "https://fake.request", func(req *http.Request) (*http.Response, error) {

@@ -116,7 +116,7 @@ func Test_requestMiniProgramAccessToken(t *testing.T) {
 		// 测试发送请求失败
 		statusCode, responseData := requestMiniProgramAccessToken("fakeAppID", "fakeSecret")
 		So(statusCode, ShouldEqual, http.StatusInternalServerError)
-		So(fmt.Sprint(responseData), ShouldEqual, "map[Error:发送 GET 请求出错. 状态码: 500 Message:发送请求失败]")
+		So(fmt.Sprint(responseData), ShouldEqual, "map[Error:unexpected end of JSON input Message:发送请求失败]")
 
 		// 调整 httpmock 返回错误的响应
 		httpmock.RegisterResponder(http.MethodGet, "https://api.weixin.qq.com/cgi-bin/token?appid=fakeAppID&grant_type=client_credential&secret=fakeSecret", httpmock.NewJsonResponderOrPanic(http.StatusOK, response.Struct{"errcode": 40013, "errmsg": "invalid appid"}))

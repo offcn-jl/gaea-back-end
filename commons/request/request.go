@@ -12,8 +12,6 @@ package request
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/offcn-jl/gaea-back-end/commons/logger"
 	"io/ioutil"
 	"net/http"
@@ -38,16 +36,12 @@ func GetSendQueryReceiveBytes(path string, query map[string]string) ([]byte, err
 			return nil, err
 		} else {
 			defer responseData.Body.Close() // 函数退出时关闭 body
-			if responseData.StatusCode != 200 {
-				// 请求出错
-				return nil, errors.New("发送 GET 请求出错. 状态码: " + fmt.Sprint(responseData.StatusCode))
+			// 读取 body
+			if responseBytes, err := ioutil.ReadAll(responseData.Body); err != nil {
+				return nil, err
 			} else {
-				// 读取 body
-				if responseBytes, err := ioutil.ReadAll(responseData.Body); err != nil {
-					return nil, err
-				} else {
-					return responseBytes, nil
-				}
+				logger.DebugToJson("GET 请求到 "+path+" 的响应", string(responseBytes))
+				return responseBytes, nil
 			}
 		}
 	}
@@ -84,16 +78,12 @@ func PostSendJsonReceiveBytes(path string, jsonMap map[string]interface{}) ([]by
 			return nil, err
 		} else {
 			defer responseData.Body.Close() // 函数退出时关闭 body
-			if responseData.StatusCode != 200 {
-				// 请求出错
-				return nil, errors.New("发送 POST 请求出错. 状态码: " + fmt.Sprint(responseData.StatusCode))
+			// 读取 body
+			if responseBytes, err := ioutil.ReadAll(responseData.Body); err != nil {
+				return nil, err
 			} else {
-				// 读取 body
-				if responseBytes, err := ioutil.ReadAll(responseData.Body); err != nil {
-					return nil, err
-				} else {
-					return responseBytes, nil
-				}
+				logger.DebugToJson("POST 请求到 "+path+" 的响应", string(responseBytes))
+				return responseBytes, nil
 			}
 		}
 	}
