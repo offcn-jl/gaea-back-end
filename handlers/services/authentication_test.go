@@ -88,7 +88,7 @@ func TestGetMiniProgramAccessToken(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Get \\\"https://api.weixin.qq.com/cgi-bin/token?appid=fake-app-id\\u0026grant_type=client_credential\\u0026secret=fake-secret\\\": no responder found\",\"Message\":\"发送请求失败\"}")
 
 		// 添加一条已经超过有效期的记录
-		orm.MySQL.Gaea.Create(&structs.MiniProgramAccessToken{AppID: "fake-app-id", AccessToken: "ExpiredAccessToken", ExpiresIn: 0})
+		orm.MySQL.Gaea.Create(&structs.MiniProgramAccessToken{AppID: "fake-app-id", AccessToken: "ExpiredAccessToken", ExpiresIn: -1000})
 
 		// 测试记录已经超过有效期，调用获取函数获取一条 AccessToken 并返回
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
@@ -96,7 +96,7 @@ func TestGetMiniProgramAccessToken(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Get \\\"https://api.weixin.qq.com/cgi-bin/token?appid=fake-app-id\\u0026grant_type=client_credential\\u0026secret=fake-secret\\\": no responder found\",\"Message\":\"发送请求失败\"}")
 
 		// 添加一条有效的记录
-		orm.MySQL.Gaea.Create(&structs.MiniProgramAccessToken{AppID: "fake-app-id", AccessToken: "AccessToken", ExpiresIn: 210})
+		orm.MySQL.Gaea.Create(&structs.MiniProgramAccessToken{AppID: "fake-app-id", AccessToken: "AccessToken", ExpiresIn: 1000})
 
 		// 测试记录没有超过有效期，直接返回
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
