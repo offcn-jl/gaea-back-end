@@ -10,9 +10,11 @@
 package request
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/offcn-jl/gaea-back-end/commons/logger"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -63,6 +65,36 @@ func GetSendQueryReceiveJson(path string, query map[string]string) (map[string]i
 		} else {
 			// 返回请求回来的 Json 的 Map
 			return responseJson, nil
+		}
+	}
+}
+
+// PostSendJsonReceiveBytes 用 POST 发送 Json 类型的请求并接受 Bytes 类型响应
+func PostSendJsonReceiveBytes(path string, jsonMap map[string]interface{}) ([]byte, error) {
+	// 将 jsonMap 序列化为 Json 字符串并不进行转义
+	// 因为微信公众平台的创建小程序二维码接口不能接收 htmlEncode 编码过的 Json 数据, 所以采用这种方式生成 Json 字符串
+	requestBody := &bytes.Buffer{}
+	encoder := json.NewEncoder(requestBody)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(jsonMap); err != nil {
+		return nil, err
+	} else {
+		logger.DebugToString("序列化后的 Json 字符串", requestBody.String())
+		if responseData, err := http.Post(path, "application/json", requestBody); err != nil {
+			return nil, err
+		} else {
+			defer responseData.Body.Close() // 函数退出时关闭 body
+			if responseData.StatusCode != 200 {
+				// 请求出错
+				return nil, errors.New("发送 POST 请求出错. 状态码: " + fmt.Sprint(responseData.StatusCode))
+			} else {
+				// 读取 body
+				if responseBytes, err := ioutil.ReadAll(responseData.Body); err != nil {
+					return nil, err
+				} else {
+					return responseBytes, nil
+				}
+			}
 		}
 	}
 }
