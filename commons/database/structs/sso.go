@@ -62,6 +62,7 @@ type SingleSignOnSession struct {
 	CustomerMayor      string `json:"CustomerMayor"`      // 客户专业
 	Remark             string `json:"Remark"`             // 备注
 	// 平台日志
+	URL      string `json:"URL" binding:"required"` // 用户来源链接
 	SourceIP string // 用户 IP
 }
 
