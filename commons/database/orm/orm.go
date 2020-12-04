@@ -162,6 +162,9 @@ func autoMigrate() {
 	MySQL.Gaea.AutoMigrate(
 		// System 系统
 		structs.SystemConfig{},
+		structs.SystemUser{},
+		structs.SystemUserLoginFailLog{},
+		structs.SystemSession{},
 		// SingleSignOn 单点登陆
 		structs.SingleSignOnLoginModule{},
 		structs.SingleSignOnVerificationCode{},
