@@ -14,6 +14,7 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/response"
 	"github.com/offcn-jl/gaea-back-end/handlers/events"
+	"github.com/offcn-jl/gaea-back-end/handlers/manages"
 	"github.com/offcn-jl/gaea-back-end/handlers/services"
 	"net/http"
 	"strings"
@@ -125,7 +126,25 @@ func initRouter(basePath string) *gin.Engine {
 	// 用于管理平台
 	managesGroup := defaultGroup.Group("/manages")
 	{
-		managesGroup.GET("")
+		// 系统服务
+		systemGroup := managesGroup.Group("/system")
+		{
+			// 认证服务
+			authenticationGroup := systemGroup.Group("/authentication")
+			{
+				// 获取 RSA 公钥
+				authenticationGroup.GET("/rsa/public-key.pem", manages.SystemGetRSAPublicKey)
+
+				// 进行用户登陆操作
+				authenticationGroup.POST("/user/login", manages.SystemLogin)
+
+				// 进行退出 ( 销毁会话 ) 操作
+				authenticationGroup.DELETE("/sessions/:UUID", manages.SystemLogout)
+
+				// 进行更新 Mis 口令码操作
+				authenticationGroup.PATCH("/sessions/:UUID/mis-token/:MisToken", manages.SystemUpdateMisToken)
+			}
+		}
 	}
 
 	// 活动 ( 外部服务 )
