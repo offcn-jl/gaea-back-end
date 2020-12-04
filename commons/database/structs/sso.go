@@ -19,6 +19,7 @@ type SingleSignOnLoginModule struct {
 	CRMEID        string `gorm:"not null;column:crm_eid" json:"EID" binding:"required"`      // CRM 活动编码
 	CRMEFID       uint   `gorm:"not null;column:crm_ef_id" json:"EFID" binding:"required"`   // CRM 活动表单 ID
 	CRMEFSID      string `gorm:"not null;column:crm_ef_sid" json:"EFSID" binding:"required"` // CRM 活动表单 SID
+	URLs          string `gorm:"not null"`                                                   // 活动链接, 使用英文逗号进行分隔
 	Term          uint   `gorm:"not null" json:"Term" binding:"required"`                    // 验证码有效期, 分钟
 	Platform      uint   `gorm:"not null" json:"Platform" binding:"required"`                // 发信平台
 	Sign          string `gorm:"not null" json:"Sign" binding:"required"`                    // 发信签名 ( 仅腾讯云短信接口可配置, 中公短信平台的签名不可修改, 但是此处的配置与登陆模块 title 联动 )
