@@ -35,7 +35,7 @@ func Phone(phone string) bool {
 func MisToken(misToken string) (bool, error) {
 	// 获取当前系统中的 MIS 口令码
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	if responseJsonMap, err := request.GetSendQueryReceiveJson(config.Get().OffcnMisURL, map[string]string{"appid": config.Get().OffcnMisAppID, "sign": fmt.Sprintf("%x", sha1.Sum([]byte("appid="+config.Get().OffcnMisAppID+"&code="+fmt.Sprintf("%x", md5.Sum([]byte(config.Get().OffcnMisCode)))+"&noncestr=gaea&timestamp="+timestamp+"&token="+config.Get().OffcnMisToken+"&url=http://gaea.jilinoffcn.com/"))), "noncestr": "gaea", "timestamp": timestamp}); err != nil {
+	if responseJsonMap, err := request.GetSendQueryReceiveJson(config.Get().OffcnMisURL, map[string]string{"appid": config.Get().OffcnMisAppID, "sign": fmt.Sprintf("%x", sha1.Sum([]byte("appid="+config.Get().OffcnMisAppID+"&code="+fmt.Sprintf("%x", md5.Sum([]byte(config.Get().OffcnMisCode)))+"&noncestr=gaea&timestamp="+timestamp+"&token="+config.Get().OffcnMisToken+"&url=http://chaos.jilinoffcn.com/"))), "noncestr": "gaea", "timestamp": timestamp}); err != nil {
 		// 请求失败
 		return false, err
 	} else {
