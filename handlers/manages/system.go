@@ -106,14 +106,20 @@ func SystemLogin(c *gin.Context) {
 // SystemLogout 进行退出 ( 销毁会话 ) 操作
 // 本接口不需要验证 Mis Token 是否依旧有效, 所以不使用会话检查中间件对会话进行检查, 但是不使用会话检查中间件并不影响从 Header 中获取 UUID , 将 UUID 参数从 Path 中获取修改为从请求头中获取
 func SystemLogout(c *gin.Context) {
-	orm.MySQL.Gaea.Where("uuid = ?", c.GetHeader("Authorization")[5:]).Delete(structs.SystemSession{})
-	c.JSON(http.StatusOK, response.Success)
+	if len(c.GetHeader("Authorization")) > 5 {
+		orm.MySQL.Gaea.Where("uuid = ?", c.GetHeader("Authorization")[5:]).Delete(structs.SystemSession{})
+		c.JSON(http.StatusOK, response.Success)
+	}
 }
 
 // SystemUpdateMisToken 进行更新 Mis 口令码操作
 // 本接口不需要验证 Mis Token 是否依旧有效, 所以不使用会话检查中间件对会话进行检查, 但是不使用会话检查中间件并不影响从 Header 中获取 UUID , 将 UUID 参数从 Path 中获取修改为从请求头中获取
 func SystemUpdateMisToken(c *gin.Context) {
 	// 判断会话是否过期
+	if len(c.GetHeader("Authorization")) < 5 {
+		c.JSON(http.StatusUnauthorized, response.Message("会话无效"))
+		return
+	}
 	sessionInfo := structs.SystemSession{}
 	orm.MySQL.Gaea.Unscoped().Where("uuid = ?", c.GetHeader("Authorization")[5:]).Last(&sessionInfo)
 	if sessionInfo.DeletedAt != nil {
