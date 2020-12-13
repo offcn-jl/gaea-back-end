@@ -70,3 +70,13 @@ type SystemSession struct {
 	LastRequestAt time.Time `gorm:"not null"` // 最后一次操作时间
 	LastSourceIP  string    `gorm:"not null"` // 最后一次操作 IP
 }
+
+// SystemRole 系统角色表
+type SystemRole struct {
+	gorm.Model
+	CreatedUserID uint   `gorm:"not null"` // 创建用户 ID
+	UpdatedUserID uint   `gorm:"not null"` // 最终修改用户 ID
+	FatherID      uint   `gorm:"not null"` // 父角色 ID
+	Name          string `gorm:"not null"` // 角色名称
+	Permissions   string `gorm:"not null"` // 权限集
+}

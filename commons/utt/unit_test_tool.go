@@ -34,6 +34,7 @@ var tableList = []interface{}{
 	structs.SystemUser{},
 	structs.SystemUserLoginFailLog{},
 	structs.SystemSession{},
+	structs.SystemRole{},
 	// SingleSignOn 单点登陆
 	structs.SingleSignOnLoginModule{},
 	structs.SingleSignOnVerificationCode{},
