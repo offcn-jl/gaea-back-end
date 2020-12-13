@@ -66,7 +66,7 @@ func TestSystemLogin(t *testing.T) {
 		// 测试 校验参数
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemLogin(utt.GinTestContext)
-		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Key: 'UserName' Error:Field validation for 'UserName' failed on the 'required' tag\\nKey: 'Password' Error:Field validation for 'Password' failed on the 'required' tag\\nKey: 'MisToken' Error:Field validation for 'MisToken' failed on the 'required' tag\",\"Message\":\"提交的 Json 数据不正确\"}")
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Key: 'Username' Error:Field validation for 'Username' failed on the 'required' tag\\nKey: 'Password' Error:Field validation for 'Password' failed on the 'required' tag\\nKey: 'MisToken' Error:Field validation for 'MisToken' failed on the 'required' tag\",\"Message\":\"提交的 Json 数据不正确\"}")
 
 		// 修正请求内容
 		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"UserName\":\"fake-username\",\"Password\":\"fake-password\",\"MisToken\":\"fake-token\"}"))
@@ -98,7 +98,7 @@ func TestSystemLogin(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"用户不存在或已经被禁用\"}")
 
 		// 创建用户
-		utt.ORM.Create(&structs.SystemUser{UserName: "fake-username"})
+		utt.ORM.Create(&structs.SystemUser{Username: "fake-username"})
 
 		// 添加请求内容
 		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"UserName\":\"fake-username\",\"Password\":\"fake-password\",\"MisToken\":\"fake-token\"}"))
@@ -150,7 +150,7 @@ func TestSystemLogin(t *testing.T) {
 		encryptedRequestPassword, _ = encrypt.RSAEncrypt([]byte("wrong-fake-password"))
 		encryptedDatabasePassword, _ := encrypt.RSAEncrypt([]byte("fake-password"))
 		// 修改数据库中的用户密码
-		utt.ORM.Model(structs.SystemUser{}).Update(&structs.SystemUser{UserName: "fake-username", Password: encryptedDatabasePassword})
+		utt.ORM.Model(structs.SystemUser{}).Update(&structs.SystemUser{Username: "fake-username", Password: encryptedDatabasePassword})
 		// 添加请求内容
 		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"UserName\":\"fake-username\",\"Password\":\""+encryptedRequestPassword+"\",\"MisToken\":\"fake-token\"}"))
 		// 测试密码不正确
