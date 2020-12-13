@@ -139,10 +139,10 @@ func initRouter(basePath string) *gin.Engine {
 				authenticationGroup.POST("/user/login", manages.SystemLogin)
 
 				// 进行退出 ( 销毁会话 ) 操作
-				authenticationGroup.DELETE("/sessions/:UUID", manages.SystemLogout)
+				authenticationGroup.DELETE("/session/delete", manages.SystemLogout)
 
 				// 进行更新 Mis 口令码操作
-				authenticationGroup.PATCH("/sessions/:UUID/mis-token/:MisToken", manages.SystemUpdateMisToken)
+				authenticationGroup.PUT("/session/mis-token/:MisToken", manages.SystemUpdateMisToken)
 			}
 		}
 	}
