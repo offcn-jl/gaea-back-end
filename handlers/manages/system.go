@@ -124,7 +124,7 @@ func SystemUpdateMisToken(c *gin.Context) {
 	}
 	sessionInfo := structs.SystemSession{}
 	orm.MySQL.Gaea.Unscoped().Where("uuid = ?", c.GetHeader("Authorization")[5:]).Last(&sessionInfo)
-	if sessionInfo.DeletedAt != nil {
+	if sessionInfo.ID == 0 || sessionInfo.DeletedAt != nil {
 		c.JSON(http.StatusUnauthorized, response.Message("会话无效"))
 		return
 	}
