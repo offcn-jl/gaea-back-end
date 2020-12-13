@@ -109,6 +109,8 @@ func SystemLogout(c *gin.Context) {
 	if len(c.GetHeader("Authorization")) > 5 {
 		orm.MySQL.Gaea.Where("uuid = ?", c.GetHeader("Authorization")[5:]).Delete(structs.SystemSession{})
 		c.JSON(http.StatusOK, response.Success)
+	} else {
+		c.JSON(http.StatusUnauthorized, response.Message("会话无效"))
 	}
 }
 
