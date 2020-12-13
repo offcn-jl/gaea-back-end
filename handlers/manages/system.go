@@ -54,7 +54,7 @@ func SystemLogin(c *gin.Context) {
 
 	// 使用用户名到数据库中取出用户的密码 (经过 RSA 加密)
 	userInfo := structs.SystemUser{}
-	orm.MySQL.Gaea.Where("user_name = ?", requestJsonMap.Username).Find(&userInfo)
+	orm.MySQL.Gaea.Where("username = ?", requestJsonMap.Username).Find(&userInfo)
 	// 校验用户是否存在
 	if userInfo.Username == "" {
 		c.JSON(http.StatusForbidden, response.Message("用户不存在或已经被禁用"))
