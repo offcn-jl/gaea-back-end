@@ -12,6 +12,7 @@ package manages
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/offcn-jl/gaea-back-end/commons/auth"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
 	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
@@ -139,4 +140,63 @@ func SystemUpdateMisToken(c *gin.Context) {
 		orm.MySQL.Gaea.Model(structs.SystemSession{}).Where("uuid = ?", sessionInfo.UUID).Update("mis_token", c.Param("MisToken"))
 		c.JSON(http.StatusOK, response.Success)
 	}
+}
+
+// SystemUpdatePassword 更新用户密码
+func SystemUpdatePassword(c *gin.Context) {
+	// 进行参数绑定
+	requestJsonMap := struct {
+		OldPassword string `json:"OldPassword" binding:"required"`
+		NewPassword string `json:"NewPassword" binding:"required"`
+	}{}
+	if err := c.ShouldBindJSON(&requestJsonMap); err != nil {
+		logger.Error(err)
+		c.JSON(http.StatusBadRequest, response.Json.Invalid(err))
+		return
+	}
+
+	// 校验旧密码是否可以正确的被 RSA 解密
+	DecryptedOldPassword, err := encrypt.RSADecrypt(requestJsonMap.OldPassword)
+	if err != nil {
+		// RSA 解密失败
+		c.JSON(http.StatusBadRequest, response.Error("旧密码 RSA 解密失败", err))
+		return
+	}
+
+	// 校验新密码是否可以正确的被 RSA 解密
+	_, err = encrypt.RSADecrypt(requestJsonMap.NewPassword)
+	if err != nil {
+		// RSA 解密失败
+		c.JSON(http.StatusBadRequest, response.Error("新密码 RSA 解密失败", err))
+		return
+	}
+
+	// 解密用户当前密码
+	DecryptedUserPassword, err := encrypt.RSADecrypt(auth.GetUserInfo(c).Password)
+	if err != nil {
+		// RSA 解密失败
+		c.JSON(http.StatusBadRequest, response.Error("用户密码 RSA 解密失败", err))
+		return
+	}
+
+	// 对比用户名密码是否一致
+	if string(DecryptedOldPassword) != string(DecryptedUserPassword) {
+		// 旧密码与系统中保存的不一致
+		c.JSON(http.StatusForbidden, response.Message("旧密码输入错误"))
+		return
+	} else {
+		// 更新密码及最后更新用户字段
+		orm.MySQL.Gaea.Model(structs.SystemUser{}).Where("id = ?", auth.GetUserInfo(c).ID).Updates(structs.SystemUser{Password: requestJsonMap.NewPassword, UpdatedUserID: auth.GetUserInfo(c).ID})
+		c.JSON(http.StatusOK, response.Success)
+	}
+}
+
+// SystemUserBasicInfo 获取用户基本信息
+func SystemUserBasicInfo(c *gin.Context) {
+	userInfo := auth.GetUserInfo(c)
+	roleInfo := structs.SystemRole{}
+	orm.MySQL.Gaea.Where("id = ?", userInfo.RoleID).Last(&roleInfo)
+
+	// 返回用户名、 姓名、 角色名、 权限集
+	c.JSON(http.StatusOK, response.Data(response.Struct{"Name": userInfo.Name, "Role": roleInfo.Name, "Permissions": roleInfo.Permissions}))
 }
