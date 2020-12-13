@@ -190,6 +190,11 @@ func TestSystemLogin(t *testing.T) {
 // TestSystemLogout 测试 SystemLogout 是否可以进行退出 ( 销毁会话 ) 操作
 func TestSystemLogout(t *testing.T) {
 	Convey("测试 SystemLogout 是否可以进行退出 ( 销毁会话 ) 操作", t, func() {
+		// 测试未配置鉴权信息
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemLogout(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
+
 		// 模拟登陆
 		// 清除前一测试中添加的登陆失败记录
 		utt.ORM.Delete(&structs.SystemUserLoginFailLog{})
@@ -231,6 +236,10 @@ func TestSystemLogout(t *testing.T) {
 func TestSystemUpdateMisToken(t *testing.T) {
 	Convey("测试 SystemUpdateMisToken 是否可以进行更新 Mis 口令码操作", t, func() {
 		// 测试会话无效
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemUpdateMisToken(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
+		utt.GinTestContext.Request.Header.Del("Authorization")
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemUpdateMisToken(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
