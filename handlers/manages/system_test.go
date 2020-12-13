@@ -213,7 +213,7 @@ func TestSystemLogout(t *testing.T) {
 		So(sessionInfo.DeletedAt, ShouldBeNil)
 
 		// 配置 UUID 参数
-		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "UUID", Value: sessionInfo.UUID}}
+		utt.GinTestContext.Request.Header.Add("Authorization", "Gaea "+sessionInfo.UUID)
 
 		// 测试退出操作
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
@@ -255,7 +255,7 @@ func TestSystemUpdateMisToken(t *testing.T) {
 		So(sessionInfo.UserID, ShouldEqual, 1)
 		So(sessionInfo.DeletedAt, ShouldBeNil)
 		// 将会话 UUID 配置到请求上下文中
-		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "UUID", Value: sessionInfo.UUID}}
+		utt.GinTestContext.Request.Header.Add("Authorization", "Gaea "+sessionInfo.UUID)
 
 		// 修改 httpmock 为获取口令码失败
 		httpmock.RegisterNoResponder(httpmock.NewJsonResponderOrPanic(http.StatusOK, response.Struct{"status": 2}))
@@ -274,7 +274,7 @@ func TestSystemUpdateMisToken(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"Mis 口令码不正确\"}")
 
 		// 将正确的 Mis 口令码 配置到请求上下文中
-		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "UUID", Value: sessionInfo.UUID}, gin.Param{Key: "MisToken", Value: "new-fake-token"}}
+		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "MisToken", Value: "new-fake-token"}}
 
 		// 测试更新成功
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
