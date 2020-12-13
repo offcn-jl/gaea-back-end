@@ -32,7 +32,7 @@ func SystemGetRSAPublicKey(c *gin.Context) {
 // SystemLogin 进行用户登陆操作
 func SystemLogin(c *gin.Context) {
 	requestJsonMap := struct {
-		UserName string `json:"UserName" binding:"required"` // 用户名
+		Username string `json:"Username" binding:"required"` // 用户名
 		Password string `json:"Password" binding:"required"` // 密码
 		MisToken string `json:"MisToken" binding:"required"` // Mis 口令码
 	}{}
@@ -54,9 +54,9 @@ func SystemLogin(c *gin.Context) {
 
 	// 使用用户名到数据库中取出用户的密码 (经过 RSA 加密)
 	userInfo := structs.SystemUser{}
-	orm.MySQL.Gaea.Where("user_name = ?", requestJsonMap.UserName).Find(&userInfo)
+	orm.MySQL.Gaea.Where("user_name = ?", requestJsonMap.Username).Find(&userInfo)
 	// 校验用户是否存在
-	if userInfo.UserName == "" {
+	if userInfo.Username == "" {
 		c.JSON(http.StatusForbidden, response.Message("用户不存在或已经被禁用"))
 		return
 	}

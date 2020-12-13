@@ -48,7 +48,7 @@ type SystemUser struct {
 	CreatedUserID uint   `gorm:"not null"`                    // 创建用户 ID
 	UpdatedUserID uint   `gorm:"not null"`                    // 最终修改用户 ID
 	RoleID        uint   `gorm:"not null"`                    // 角色 ID
-	UserName      string `gorm:"not null"`                    // 用户名
+	Username      string `gorm:"not null"`                    // 用户名
 	Password      string `gorm:"type:varchar(1000);not null"` // 密码
 	Name          string `gorm:"not null"`                    // 姓名
 }
