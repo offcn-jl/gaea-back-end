@@ -15,7 +15,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/gin-gonic/gin"
 	"github.com/jarcoal/httpmock"
 	"github.com/jinzhu/gorm"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
@@ -236,11 +235,33 @@ func TestSystemLogout(t *testing.T) {
 // TestSystemUpdateMisToken 测试 SystemUpdateMisToken 是否可以进行更新 Mis 口令码操作
 func TestSystemUpdateMisToken(t *testing.T) {
 	Convey("测试 SystemUpdateMisToken 是否可以进行更新 Mis 口令码操作", t, func() {
+		// 测试 绑定参数错误
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemUpdateMisToken(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"EOF\",\"Message\":\"提交的 Json 数据不正确\"}")
+
+		// 增加 Body
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{}"))
+
+		// 测试 校验参数
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemUpdateMisToken(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"Key: 'MisToken' Error:Field validation for 'MisToken' failed on the 'required' tag\",\"Message\":\"提交的 Json 数据不正确\"}")
+
+		// 配置请求内容
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MisToken\":\"fake-token\"}"))
+
 		// 测试会话无效
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemUpdateMisToken(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
-		utt.GinTestContext.Request.Header.Del("Authorization")
+
+		// 配置请求内容
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MisToken\":\"fake-token\"}"))
+		// 将会话 UUID 配置到请求上下文中
+		utt.GinTestContext.Request.Header.Add("Authorization", "Gaea fake-session")
+
+		// 测试会话无效
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemUpdateMisToken(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
@@ -264,11 +285,14 @@ func TestSystemUpdateMisToken(t *testing.T) {
 		So(sessionInfo.MisToken, ShouldEqual, "fake-token")
 		So(sessionInfo.UserID, ShouldEqual, 1)
 		So(sessionInfo.DeletedAt, ShouldBeNil)
-		// 将会话 UUID 配置到请求上下文中
-		utt.GinTestContext.Request.Header.Add("Authorization", "Gaea "+sessionInfo.UUID)
 
 		// 修改 httpmock 为获取口令码失败
 		httpmock.RegisterNoResponder(httpmock.NewJsonResponderOrPanic(http.StatusOK, response.Struct{"status": 2}))
+
+		// 配置请求内容
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MisToken\":\"fake-token\"}"))
+		// 将会话 UUID 配置到请求上下文中
+		utt.GinTestContext.Request.Header.Add("Authorization", "Gaea "+sessionInfo.UUID)
 
 		// 测试校验口令码失败
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
@@ -278,13 +302,20 @@ func TestSystemUpdateMisToken(t *testing.T) {
 		// 修改 httpmock 为获取口令码成功
 		httpmock.RegisterNoResponder(httpmock.NewJsonResponderOrPanic(http.StatusOK, response.Struct{"status": 1, "msg": "SIGN验签成功", "data": "new-fake-token"}))
 
+		// 配置请求内容
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MisToken\":\"fake-token\"}"))
+		// 将会话 UUID 配置到请求上下文中
+		utt.GinTestContext.Request.Header.Add("Authorization", "Gaea "+sessionInfo.UUID)
+
 		// 测试口令码不正确
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemUpdateMisToken(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"Mis 口令码不正确\"}")
 
 		// 将正确的 Mis 口令码 配置到请求上下文中
-		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "MisToken", Value: "new-fake-token"}}
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"MisToken\":\"new-fake-token\"}"))
+		// 将会话 UUID 配置到请求上下文中
+		utt.GinTestContext.Request.Header.Add("Authorization", "Gaea "+sessionInfo.UUID)
 
 		// 测试更新成功
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body

@@ -91,7 +91,7 @@ func InitRouter(basePath string) *gin.Engine {
 				authenticationGroup.DELETE("/session/delete", manages.SystemLogout)
 
 				// 进行更新 Mis 口令码操作
-				authenticationGroup.PUT("/session/mis-token/:MisToken", manages.SystemUpdateMisToken)
+				authenticationGroup.PUT("/session/mis-token", manages.SystemUpdateMisToken)
 
 				// 修改用户密码
 				authenticationGroup.PUT("/user/password", checkSession, manages.SystemUpdatePassword)

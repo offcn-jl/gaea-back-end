@@ -118,6 +118,16 @@ func SystemLogout(c *gin.Context) {
 // SystemUpdateMisToken 进行更新 Mis 口令码操作
 // 本接口不需要验证 Mis Token 是否依旧有效, 所以不使用会话检查中间件对会话进行检查, 但是不使用会话检查中间件并不影响从 Header 中获取 UUID , 将 UUID 参数从 Path 中获取修改为从请求头中获取
 func SystemUpdateMisToken(c *gin.Context) {
+	requestJsonMap := struct {
+		MisToken string `json:"MisToken" binding:"required"` // Mis 口令码
+	}{}
+	// 绑定参数
+	if err := c.ShouldBindJSON(&requestJsonMap); err != nil {
+		logger.Error(err)
+		c.JSON(http.StatusBadRequest, response.Json.Invalid(err))
+		return
+	}
+
 	// 判断会话是否过期
 	if len(c.GetHeader("Authorization")) < 5 {
 		c.JSON(http.StatusUnauthorized, response.Message("会话无效"))
@@ -131,13 +141,13 @@ func SystemUpdateMisToken(c *gin.Context) {
 	}
 
 	// 校验 Mis 口令码是否有效
-	if pass, err := verify.MisToken(c.Param("MisToken")); err != nil {
+	if pass, err := verify.MisToken(requestJsonMap.MisToken); err != nil {
 		c.JSON(http.StatusInternalServerError, response.Error("校验 Mis 口令码失败", err))
 	} else if !pass {
 		c.JSON(http.StatusForbidden, response.Message("Mis 口令码不正确"))
 	} else {
 		// 更新 UUID 对应 Session 的 Mis 口令码记录
-		orm.MySQL.Gaea.Model(structs.SystemSession{}).Where("uuid = ?", sessionInfo.UUID).Update("mis_token", c.Param("MisToken"))
+		orm.MySQL.Gaea.Model(structs.SystemSession{}).Where("uuid = ?", sessionInfo.UUID).Update("mis_token", requestJsonMap.MisToken)
 		c.JSON(http.StatusOK, response.Success)
 	}
 }
