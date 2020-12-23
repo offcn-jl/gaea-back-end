@@ -235,6 +235,11 @@ func checkSession(c *gin.Context) {
 			orm.MySQL.Gaea.Where("id = ?", lastSessionInfo.UserID).Last(&userInfo)
 			// 将用户信息保存到 Gin 的上下文中
 			c.Set("UserInfo", userInfo)
+			// 取出角色信息
+			roleInfo := structs.SystemRole{}
+			orm.MySQL.Gaea.Where("id = ?", userInfo.RoleID).Find(&roleInfo)
+			// 将角色信息保存到 Gin 的上下文中
+			c.Set("RoleInfo", roleInfo)
 			// 继续执行后续操作
 			c.Next()
 		}

@@ -14,12 +14,26 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
 )
 
-// GetUserInfo 从上下文中获取用户信息
+// GetUserInfo 从 Gin 的上下文中获取用户信息
 func GetUserInfo(c *gin.Context) structs.SystemUser {
-	// 校验当前用户所在用户组是否具有管理目标用户组的权限 即目标用户组是否是当前用户所在用户组的子用户组
+	// 从 Gin 的上下文中取出用户信息并判断是否存在角色信息
 	if userInfo, exists := c.Get("UserInfo"); !exists {
+		// 不存在, 返回一个空结构体, 业务侧需要根据结构体是否为空来判断是否成功获取到信息
 		return structs.SystemUser{}
 	} else {
+		// 存在, 返回信息
 		return userInfo.(structs.SystemUser)
+	}
+}
+
+// GetRoleInfo 从 Gin 的上下文中获取角色信息
+func GetRoleInfo(c *gin.Context) structs.SystemRole {
+	// 从 Gin 的上下文中取出角色信息并判断是否存在角色信息
+	if roleInfo, exists := c.Get("RoleInfo"); !exists {
+		// 不存在, 返回一个空结构体, 业务侧需要根据结构体是否为空来判断是否成功获取到信息
+		return structs.SystemRole{}
+	} else {
+		// 存在, 返回信息
+		return roleInfo.(structs.SystemRole)
 	}
 }

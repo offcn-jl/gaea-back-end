@@ -204,8 +204,7 @@ func SystemUpdatePassword(c *gin.Context) {
 // SystemUserBasicInfo 获取用户基本信息
 func SystemUserBasicInfo(c *gin.Context) {
 	userInfo := auth.GetUserInfo(c)
-	roleInfo := structs.SystemRole{}
-	orm.MySQL.Gaea.Where("id = ?", userInfo.RoleID).Last(&roleInfo)
+	roleInfo := auth.GetRoleInfo(c)
 
 	// 返回用户名、 姓名、 角色名、 权限集
 	c.JSON(http.StatusOK, response.Data(response.Struct{"Name": userInfo.Name, "Role": roleInfo.Name, "Permissions": roleInfo.Permissions}))
