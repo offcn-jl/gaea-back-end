@@ -10,6 +10,7 @@
 package router
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
@@ -94,10 +95,10 @@ func InitRouter(basePath string) *gin.Engine {
 				authenticationGroup.PUT("/session/mis-token", manages.SystemUpdateMisToken)
 
 				// 修改用户密码
-				authenticationGroup.PUT("/user/password", checkSession, manages.SystemUpdatePassword)
+				authenticationGroup.PUT("/user/password", checkSessionAndPermission(""), manages.SystemUpdatePassword)
 
 				// 获取用户基本信息
-				authenticationGroup.GET("/user/info/basic", checkSession, manages.SystemUserBasicInfo)
+				authenticationGroup.GET("/user/info/basic", checkSessionAndPermission(""), manages.SystemUserBasicInfo)
 			}
 		}
 	}
@@ -187,61 +188,95 @@ func corsCheck(c *gin.Context) {
 	}
 }
 
-// checkSession 会话有效性检查
-func checkSession(c *gin.Context) {
-	// 检查是否配置了鉴权信息
-	if len(c.GetHeader("Authorization")) < 5 {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("会话无效"))
-		return
-	}
+// checkSessionAndPermission 检查会话有效性与接口访问权限
+// 参数为空时, 不检查接口访问权限
+func checkSessionAndPermission(permission string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 检查是否配置了鉴权信息
+		if len(c.GetHeader("Authorization")) < 5 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("会话无效"))
+			return
+		}
 
-	// 检查 UUID 是否有效
-	sessionInfo := structs.SystemSession{}
-	orm.MySQL.Gaea.Unscoped().Where("uuid = ?", c.GetHeader("Authorization")[5:]).Last(&sessionInfo)
-	// 判断是否存在该 UUID
-	if sessionInfo.ID == 0 || sessionInfo.DeletedAt != nil {
-		// UUID不存在或已经退出登陆 401 需要身份验证
-		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("会话无效"))
-		return
-	}
+		// 检查 UUID 是否有效
+		sessionInfo := structs.SystemSession{}
+		orm.MySQL.Gaea.Unscoped().Where("uuid = ?", c.GetHeader("Authorization")[5:]).Last(&sessionInfo)
+		// 判断是否存在该 UUID
+		if sessionInfo.ID == 0 || sessionInfo.DeletedAt != nil {
+			// UUID不存在或已经退出登陆 401 需要身份验证
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("会话无效"))
+			return
+		}
 
-	// 更新本条 UUID 的最后请求时间
-	orm.MySQL.Gaea.Unscoped().Where("uuid = ?", sessionInfo.UUID).Update(&structs.SystemSession{LastRequestAt: time.Now()})
+		// 更新本条 UUID 的最后请求时间
+		orm.MySQL.Gaea.Unscoped().Where("uuid = ?", sessionInfo.UUID).Update(&structs.SystemSession{LastRequestAt: time.Now()})
 
-	// 根据 UUID 对应的 UID 获取会话表中的最后一条 UUID ，避免重复登陆
-	lastSessionInfo := structs.SystemSession{}
-	orm.MySQL.Gaea.Unscoped().Where("user_id = ?", sessionInfo.UserID).Last(&lastSessionInfo)
-	// 判断最后一条 UUID 是否与传入的 UUID 相等
-	if lastSessionInfo.UUID != sessionInfo.UUID {
-		// 不相等则返回需要身份验证
-		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("会话无效"))
-		return
-	}
+		// 根据 UUID 对应的 UID 获取会话表中的最后一条 UUID ，避免重复登陆
+		lastSessionInfo := structs.SystemSession{}
+		orm.MySQL.Gaea.Unscoped().Where("user_id = ?", sessionInfo.UserID).Last(&lastSessionInfo)
+		// 判断最后一条 UUID 是否与传入的 UUID 相等
+		if lastSessionInfo.UUID != sessionInfo.UUID {
+			// 不相等则返回需要身份验证
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("会话无效"))
+			return
+		}
 
-	// UUID 有效，继续判断 UUID 是否绑定 MIS TOKEN
-	if lastSessionInfo.MisToken == "" {
-		// 没有绑定 MIS Token  401 需要身份验证
-		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("Mis 口令码无效"))
-	} else {
-		// 校验 Mis 口令码是否有效
-		if pass, err := verify.MisToken(lastSessionInfo.MisToken); err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, response.Error("校验 Mis 口令码失败", err))
-		} else if !pass {
-			c.AbortWithStatusJSON(http.StatusForbidden, response.Message("Mis 口令码无效"))
+		// UUID 有效，继续判断 UUID 是否绑定 MIS TOKEN
+		if lastSessionInfo.MisToken == "" {
+			// 没有绑定 MIS Token  401 需要身份验证
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response.Message("Mis 口令码无效"))
 		} else {
-			// 口令码有效
-			// 取出用户信息
-			userInfo := structs.SystemUser{}
-			orm.MySQL.Gaea.Where("id = ?", lastSessionInfo.UserID).Last(&userInfo)
-			// 将用户信息保存到 Gin 的上下文中
-			c.Set("UserInfo", userInfo)
-			// 取出角色信息
-			roleInfo := structs.SystemRole{}
-			orm.MySQL.Gaea.Where("id = ?", userInfo.RoleID).Find(&roleInfo)
-			// 将角色信息保存到 Gin 的上下文中
-			c.Set("RoleInfo", roleInfo)
-			// 继续执行后续操作
-			c.Next()
+			// 校验 Mis 口令码是否有效
+			if pass, err := verify.MisToken(lastSessionInfo.MisToken); err != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, response.Error("校验 Mis 口令码失败", err))
+			} else if !pass {
+				c.AbortWithStatusJSON(http.StatusForbidden, response.Message("Mis 口令码无效"))
+			} else {
+				// 口令码有效
+				// 取出用户信息
+				userInfo := structs.SystemUser{}
+				orm.MySQL.Gaea.Where("id = ?", lastSessionInfo.UserID).Last(&userInfo)
+				// 取出角色信息
+				roleInfo := structs.SystemRole{}
+				orm.MySQL.Gaea.Where("id = ?", userInfo.RoleID).Find(&roleInfo)
+				// 判断是否需要校验权限
+				if permission != "" {
+					// 需要校验的权限参数不为空时, 代表需要进行权限校验
+					// 初始化字符串数组用于保存角色的权限信息
+					rolePermissions := make([]string, 0)
+					// 将角色的权限信息从 JSON 字符串反序列化为字符串数组, 并检查是否反序列化成功
+					if err = json.Unmarshal([]byte(roleInfo.Permissions), &rolePermissions); err != nil {
+						// 反序列化失败, 返回错误信息
+						c.AbortWithStatusJSON(http.StatusInternalServerError, response.Error("反序列化角色权限配置失败", err))
+						return
+					} else {
+						// 定义是否具有权限的标志
+						hasPermission := false
+						// 遍历权限数组, 检查角色是否具有权限
+						for _, rolePermission := range rolePermissions {
+							// 检查角色是否具有权限
+							if rolePermission == permission {
+								// 具有权限, 设置是否具有权限的标志为真并结束遍历
+								hasPermission = true
+								break
+							}
+						}
+						// 判断是否通过权限检查
+						if !hasPermission {
+							// 没有通过权限检查, 返回错误信息终止后续操作
+							c.AbortWithStatusJSON(http.StatusForbidden, response.Message("没有接口访问权限"))
+							return
+						}
+						// 通过权限检查, 继续执行后续操作
+					}
+				}
+				// 将用户信息保存到 Gin 的上下文中
+				c.Set("UserInfo", userInfo)
+				// 将角色信息保存到 Gin 的上下文中
+				c.Set("RoleInfo", roleInfo)
+				// 继续执行后续操作
+				c.Next()
+			}
 		}
 	}
 }

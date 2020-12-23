@@ -142,12 +142,13 @@ func Test_corsCheck(t *testing.T) {
 	})
 }
 
-// Test_checkSession 测试 checkSession 是否可以进行会话有效性检查
-func Test_checkSession(t *testing.T) {
-	Convey("测试 checkSession 是否可以进行会话有效性检查", t, func() {
+// Test_checkSessionAndPermission 测试 checkSessionAndPermission 是否可以检查会话有效性与接口访问权限
+func Test_checkSessionAndPermission(t *testing.T) {
+	Convey("测试 checkSessionAndPermission 是否可以检查会话有效性与接口访问权限", t, func() {
 		// 测试未配置鉴权信息导致会话无效
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
-		checkSession(utt.GinTestContext)
+		handler := checkSessionAndPermission("")
+		handler(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
 		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
 
@@ -156,7 +157,8 @@ func Test_checkSession(t *testing.T) {
 
 		// 测试 UUID 无效导致会话无效
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
-		checkSession(utt.GinTestContext)
+		handler = checkSessionAndPermission("")
+		handler(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
 		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
 
@@ -170,7 +172,8 @@ func Test_checkSession(t *testing.T) {
 
 		// 测试 UUID 与最后一条不匹配导致的对话无效
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
-		checkSession(utt.GinTestContext)
+		handler = checkSessionAndPermission("")
+		handler(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"会话无效\"}")
 		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
 
@@ -179,7 +182,8 @@ func Test_checkSession(t *testing.T) {
 
 		// 测试没有绑定 MIS Token 导致的 Mis 口令码无效
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
-		checkSession(utt.GinTestContext)
+		handler = checkSessionAndPermission("")
+		handler(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"Mis 口令码无效\"}")
 		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
 
@@ -196,7 +200,8 @@ func Test_checkSession(t *testing.T) {
 
 		// 测试系统故障导致到校验口令码失败
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
-		checkSession(utt.GinTestContext)
+		handler = checkSessionAndPermission("")
+		handler(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"时间戳缺失或失效\",\"Message\":\"校验 Mis 口令码失败\"}")
 		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
 
@@ -205,17 +210,52 @@ func Test_checkSession(t *testing.T) {
 
 		// 测试口令码无效
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
-		checkSession(utt.GinTestContext)
+		handler = checkSessionAndPermission("")
+		handler(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"Mis 口令码无效\"}")
 		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
 
 		// 修改 httpmock 为返回一致的口令码
 		httpmock.RegisterNoResponder(httpmock.NewJsonResponderOrPanic(http.StatusOK, response.Struct{"status": 1, "msg": "SIGN验签成功", "data": "fake-mis-token"}))
 
-		// 测试口令码有效
-		checkSession(utt.GinTestContext)
+		// 测试口令码有效, 且无需验证权限
+		handler = checkSessionAndPermission("")
+		handler(utt.GinTestContext)
 		userInfo, exists := utt.GinTestContext.Get("UserInfo")
 		So(exists, ShouldBeTrue)
 		So(userInfo.(structs.SystemUser).ID, ShouldEqual, 0)
+		roleInfo, exists := utt.GinTestContext.Get("RoleInfo")
+		So(exists, ShouldBeTrue)
+		So(roleInfo.(structs.SystemRole).ID, ShouldEqual, 0)
+
+		// 测试校验权限是反序列化角色权限失败
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		handler = checkSessionAndPermission("fake-permission")
+		handler(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"unexpected end of JSON input\",\"Message\":\"反序列化角色权限配置失败\"}")
+		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
+
+		// 添加用于测试的用户
+		orm.MySQL.Gaea.Create(&structs.SystemUser{RoleID: 1})
+		// 添加用于测试的角色
+		orm.MySQL.Gaea.Create(&structs.SystemRole{Permissions: "[\"fake-permission-1\",\"fake-permission-2\"]"})
+
+		// 测试角色没有目标权限
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		handler = checkSessionAndPermission("fake-permission")
+		handler(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"没有接口访问权限\"}")
+		So(utt.GinTestContext.IsAborted(), ShouldBeTrue) // 测试 Abort 是否成功
+
+		// 测试通过全部检查
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		handler = checkSessionAndPermission("fake-permission-2")
+		handler(utt.GinTestContext)
+		userInfo, exists = utt.GinTestContext.Get("UserInfo")
+		So(exists, ShouldBeTrue)
+		So(userInfo.(structs.SystemUser).ID, ShouldEqual, 1)
+		roleInfo, exists = utt.GinTestContext.Get("RoleInfo")
+		So(exists, ShouldBeTrue)
+		So(roleInfo.(structs.SystemRole).ID, ShouldEqual, 1)
 	})
 }
