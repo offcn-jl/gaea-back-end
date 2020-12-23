@@ -2,16 +2,16 @@
    @Time : 2020/12/5 2:36 下午
    @Author : ShadowWalker
    @Email : master@rebeta.cn
-   @File : auth
-   @Software: GoLand
+   @File : utils
    @Description: 权限相关
 */
 
-package auth
+package utils
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
+	"strconv"
 )
 
 // GetUserInfo 从 Gin 的上下文中获取用户信息
@@ -36,4 +36,14 @@ func GetRoleInfo(c *gin.Context) structs.SystemRole {
 		// 存在, 返回信息
 		return roleInfo.(structs.SystemRole)
 	}
+}
+
+// StringToInt string 转int
+// 摘自: http://www.57mz.com/programs/golang/52.html , 该文中还有 string 转 time 函数
+func StringToInt(str string) int {
+	i, e := strconv.Atoi(str)
+	if e != nil {
+		return 0
+	}
+	return i
 }

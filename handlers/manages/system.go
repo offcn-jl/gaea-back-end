@@ -12,13 +12,13 @@ package manages
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/offcn-jl/gaea-back-end/commons/auth"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
 	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
 	"github.com/offcn-jl/gaea-back-end/commons/encrypt"
 	"github.com/offcn-jl/gaea-back-end/commons/logger"
 	"github.com/offcn-jl/gaea-back-end/commons/response"
+	"github.com/offcn-jl/gaea-back-end/commons/utils"
 	"github.com/offcn-jl/gaea-back-end/commons/verify"
 	"github.com/satori/go.uuid"
 	"net/http"
@@ -182,7 +182,7 @@ func SystemUpdatePassword(c *gin.Context) {
 	}
 
 	// 解密用户当前密码
-	DecryptedUserPassword, err := encrypt.RSADecrypt(auth.GetUserInfo(c).Password)
+	DecryptedUserPassword, err := encrypt.RSADecrypt(utils.GetUserInfo(c).Password)
 	if err != nil {
 		// RSA 解密失败
 		c.JSON(http.StatusBadRequest, response.Error("用户密码 RSA 解密失败", err))
@@ -196,15 +196,15 @@ func SystemUpdatePassword(c *gin.Context) {
 		return
 	} else {
 		// 更新密码及最后更新用户字段
-		orm.MySQL.Gaea.Model(structs.SystemUser{}).Where("id = ?", auth.GetUserInfo(c).ID).Updates(structs.SystemUser{Password: requestJsonMap.NewPassword, UpdatedUserID: auth.GetUserInfo(c).ID})
+		orm.MySQL.Gaea.Model(structs.SystemUser{}).Where("id = ?", utils.GetUserInfo(c).ID).Updates(structs.SystemUser{Password: requestJsonMap.NewPassword, UpdatedUserID: utils.GetUserInfo(c).ID})
 		c.JSON(http.StatusOK, response.Success)
 	}
 }
 
 // SystemUserBasicInfo 获取用户基本信息
 func SystemUserBasicInfo(c *gin.Context) {
-	userInfo := auth.GetUserInfo(c)
-	roleInfo := auth.GetRoleInfo(c)
+	userInfo := utils.GetUserInfo(c)
+	roleInfo := utils.GetRoleInfo(c)
 
 	// 返回用户名、 姓名、 角色名、 权限集
 	c.JSON(http.StatusOK, response.Data(response.Struct{"Name": userInfo.Name, "Role": roleInfo.Name, "Permissions": roleInfo.Permissions}))
