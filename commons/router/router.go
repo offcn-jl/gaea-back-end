@@ -208,8 +208,8 @@ func checkSessionAndPermission(permission string) gin.HandlerFunc {
 			return
 		}
 
-		// 更新本条 UUID 的最后请求时间
-		orm.MySQL.Gaea.Unscoped().Where("uuid = ?", sessionInfo.UUID).Update(&structs.SystemSession{LastRequestAt: time.Now()})
+		// 更新本条 UUID 的最后请求时间及最后请求 IP
+		orm.MySQL.Gaea.Unscoped().Model(structs.SystemSession{}).Where("uuid = ?", sessionInfo.UUID).Update(&structs.SystemSession{LastRequestAt: time.Now(), LastSourceIP: c.ClientIP()})
 
 		// 根据 UUID 对应的 UID 获取会话表中的最后一条 UUID ，避免重复登陆
 		lastSessionInfo := structs.SystemSession{}
