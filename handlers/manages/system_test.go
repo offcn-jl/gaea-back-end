@@ -37,6 +37,9 @@ func init() {
 // TestSystemGetRSAPublicKey 测试 SystemGetRSAPublicKey 函数是否可以获取 RSA 公钥
 func TestSystemGetRSAPublicKey(t *testing.T) {
 	Convey("测试 SystemGetRSAPublicKey 函数是否可以获取 RSA 公钥", t, func() {
+		// 清空配置
+		config.Update(orm.MySQL.Gaea, structs.SystemConfig{})
+
 		// 测试未配置公钥
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemGetRSAPublicKey(utt.GinTestContext)
@@ -445,10 +448,15 @@ func TestSystemUserBasicInfo(t *testing.T) {
 		// 创建角色
 		utt.ORM.Create(&structs.SystemRole{Name: "fake-role-name", Permissions: "[ \"fake-permission-1\", \"fake-permission-2\" ]"})
 
-		// 向上下文中配置用户信息
+		// 向上下文中配置用户信息 ( 正常情况下, 这部分操作由路由中间件完成 )
 		userInfo := structs.SystemUser{}
 		utt.ORM.Last(&userInfo)
 		utt.GinTestContext.Set("UserInfo", userInfo)
+
+		// 向上下文中配置角色信息 ( 正常情况下, 这部分操作由路由中间件完成 )
+		roleInfo := structs.SystemRole{}
+		orm.MySQL.Gaea.Where("id = ?", userInfo.RoleID).Find(&roleInfo)
+		utt.GinTestContext.Set("RoleInfo", roleInfo)
 
 		// 测试获取到完整的用户信息
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
