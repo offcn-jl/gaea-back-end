@@ -269,7 +269,7 @@ func checkSessionAndPermission(permission string) gin.HandlerFunc {
 						// 遍历权限数组, 检查角色是否具有权限
 						for _, rolePermission := range rolePermissions {
 							// 检查角色是否具有权限
-							if rolePermission == permission {
+							if rolePermission == permission || rolePermission == "admin" { // 角色权限集中含有路由所配置的权限 或 角色权限集中含有超级管理员权限
 								// 具有权限, 设置是否具有权限的标志为真并结束遍历
 								hasPermission = true
 								break
