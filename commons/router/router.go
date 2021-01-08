@@ -101,6 +101,20 @@ func InitRouter(basePath string) *gin.Engine {
 				authenticationGroup.GET("/user/info/basic", checkSessionAndPermission(""), manages.SystemUserBasicInfo)
 			}
 		}
+
+		// 系统管理
+		systemManagesGroup := managesGroup.Group("/system-manages")
+		{
+			// 配置管理
+			configManagesGroup := systemManagesGroup.Group("/config-manages", checkSessionAndPermission("/system-manage/config-manage"))
+			{
+				// 分页获取配置列表
+				configManagesGroup.GET("/list/page/:Page/limit/:Limit", manages.SystemManagesConfigManagesPaginationGetConfig)
+
+				// 修改配置
+				configManagesGroup.POST("/update", manages.SystemManagesConfigManagesUpdateConfig)
+			}
+		}
 	}
 
 	// 活动 ( 外部服务 )
