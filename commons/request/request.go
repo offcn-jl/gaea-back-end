@@ -40,7 +40,7 @@ func GetSendQueryReceiveBytes(path string, query map[string]string) ([]byte, err
 			if responseBytes, err := ioutil.ReadAll(responseData.Body); err != nil {
 				return nil, err
 			} else {
-				logger.DebugToJson("GET 请求到 "+path+" 的响应", string(responseBytes))
+				logger.DebugToString("GET 请求到 "+path+" 的响应", string(responseBytes))
 				return responseBytes, nil
 			}
 		}
