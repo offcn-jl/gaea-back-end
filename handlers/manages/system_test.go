@@ -58,6 +58,9 @@ func TestSystemGetRSAPublicKey(t *testing.T) {
 // TestSystemLogin 测试 SystemLogin 是否可以进行用户登陆操作
 func TestSystemLogin(t *testing.T) {
 	Convey("测试 SystemLogin 是否可以进行用户登陆操作", t, func() {
+		// 清空 Request
+		utt.GinTestContext.Request, _ = http.NewRequest("GET", "/", nil)
+
 		// 测试 绑定参数错误
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemLogin(utt.GinTestContext)
@@ -173,11 +176,10 @@ func TestSystemLogin(t *testing.T) {
 		sessionInfo := structs.SystemSession{}
 		utt.ORM.Find(&sessionInfo)
 		So(sessionInfo.MisToken, ShouldEqual, "fake-token")
-		So(sessionInfo.UserID, ShouldEqual, 1)
 
 		// 添加登陆失败记录
 		for i := 0; i < 5; i++ {
-			utt.ORM.Create(&structs.SystemUserLoginFailLog{UserID: 1})
+			utt.ORM.Create(&structs.SystemUserLoginFailLog{UserID: sessionInfo.UserID})
 		}
 
 		// 测试连续登陆失败超过 5 次
@@ -217,7 +219,6 @@ func TestSystemLogout(t *testing.T) {
 		sessionInfo := structs.SystemSession{}
 		utt.ORM.Find(&sessionInfo)
 		So(sessionInfo.MisToken, ShouldEqual, "fake-token")
-		So(sessionInfo.UserID, ShouldEqual, 1)
 		So(sessionInfo.DeletedAt, ShouldBeNil)
 
 		// 配置 UUID 参数
@@ -230,7 +231,6 @@ func TestSystemLogout(t *testing.T) {
 		// 检查会话是否已经被销毁
 		utt.ORM.Unscoped().Find(&sessionInfo)
 		So(sessionInfo.MisToken, ShouldEqual, "fake-token")
-		So(sessionInfo.UserID, ShouldEqual, 1)
 		So(sessionInfo.DeletedAt, ShouldNotBeNil)
 	})
 }
@@ -286,7 +286,6 @@ func TestSystemUpdateMisToken(t *testing.T) {
 		sessionInfo := structs.SystemSession{}
 		utt.ORM.Find(&sessionInfo)
 		So(sessionInfo.MisToken, ShouldEqual, "fake-token")
-		So(sessionInfo.UserID, ShouldEqual, 1)
 		So(sessionInfo.DeletedAt, ShouldBeNil)
 
 		// 修改 httpmock 为获取口令码失败
@@ -392,8 +391,17 @@ func TestSystemUpdatePassword(t *testing.T) {
 		SystemUpdatePassword(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"illegal base64 data at input byte 4\",\"Message\":\"新密码 RSA 解密失败\"}")
 
-		// 修正请求内容, 使用 RSA 加密旧密码
+		// 修正请求内容, 使用 RSA 加密新密码
 		encryptedNewPassword, _ := encrypt.RSAEncrypt([]byte("fake-new-password"))
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"OldPassword\":\""+encryptedOldPassword+"\",\"NewPassword\":\""+encryptedNewPassword+"\"}"))
+
+		// 测试 校验新密码复杂度是否符合要求
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemUpdatePassword(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"密码中应当包含数字\",\"Message\":\"新密码强度不符合要求\"}")
+
+		// 修正请求内容, 使强度足够的新密码
+		encryptedNewPassword, _ = encrypt.RSAEncrypt([]byte("fake-new-Password1!"))
 		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"OldPassword\":\""+encryptedOldPassword+"\",\"NewPassword\":\""+encryptedNewPassword+"\"}"))
 
 		// 测试用户密码 RSA 解密失败
@@ -415,7 +423,9 @@ func TestSystemUpdatePassword(t *testing.T) {
 
 		// 更新用户密码
 		encryptedUserPassword, _ := encrypt.RSAEncrypt([]byte("fake-old-password"))
-		utt.GinTestContext.Set("UserInfo", structs.SystemUser{Model: gorm.Model{ID: 1}, Password: encryptedUserPassword})
+		userInfo := structs.SystemUser{}
+		orm.MySQL.Gaea.Last(&userInfo)
+		utt.GinTestContext.Set("UserInfo", structs.SystemUser{Model: gorm.Model{ID: userInfo.ID}, Password: encryptedUserPassword})
 
 		// 重新添加请求内容
 		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", bytes.NewBufferString("{\"OldPassword\":\""+encryptedOldPassword+"\",\"NewPassword\":\""+encryptedNewPassword+"\"}"))
@@ -426,18 +436,20 @@ func TestSystemUpdatePassword(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"Success\"}")
 
 		// 检查用户密码是否更新成功
-		userInfo := structs.SystemUser{}
-		utt.ORM.Where("id = 1").Find(&userInfo)
+		utt.ORM.Where("id = ?", userInfo.ID).Find(&userInfo)
 		So(userInfo.Password, ShouldEqual, encryptedNewPassword)
 		decryptedNewPassword, err := encrypt.RSADecrypt(userInfo.Password)
 		So(err, ShouldBeNil)
-		So(string(decryptedNewPassword), ShouldEqual, "fake-new-password")
+		So(string(decryptedNewPassword), ShouldEqual, "fake-new-Password1!")
 	})
 }
 
 // TestSystemUserBasicInfo 测试 SystemUserBasicInfo 是否可以获取用户基本信息
 func TestSystemUserBasicInfo(t *testing.T) {
 	Convey("测试 SystemUserBasicInfo 是否可以获取用户基本信息", t, func() {
+		// 清空上下文
+		utt.GinTestContext.Set("RoleInfo", structs.SystemRole{})
+
 		// 上下文中未配置用户信息, 获取到空的用户信息
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemUserBasicInfo(utt.GinTestContext)
@@ -446,7 +458,7 @@ func TestSystemUserBasicInfo(t *testing.T) {
 		// 创建用户
 		utt.ORM.Create(&structs.SystemUser{Name: "fake-name", RoleID: 1, Username: "fake-username"})
 		// 创建角色
-		utt.ORM.Create(&structs.SystemRole{Name: "fake-role-name", Permissions: "[ \"fake-permission-1\", \"fake-permission-2\" ]"})
+		utt.ORM.Create(&structs.SystemRole{Model: gorm.Model{ID: 1}, Name: "fake-role-name", Permissions: "[ \"fake-permission-1\", \"fake-permission-2\" ]"})
 
 		// 向上下文中配置用户信息 ( 正常情况下, 这部分操作由路由中间件完成 )
 		userInfo := structs.SystemUser{}
