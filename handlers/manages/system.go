@@ -174,10 +174,17 @@ func SystemUpdatePassword(c *gin.Context) {
 	}
 
 	// 校验新密码是否可以正确的被 RSA 解密
-	_, err = encrypt.RSADecrypt(requestJsonMap.NewPassword)
+	DecryptedUserNewPassword, err := encrypt.RSADecrypt(requestJsonMap.NewPassword)
 	if err != nil {
 		// RSA 解密失败
 		c.JSON(http.StatusBadRequest, response.Error("新密码 RSA 解密失败", err))
+		return
+	}
+
+	// 校验新密码复杂度是否符合要求
+	if pass, err := verify.PasswordComplexity(string(DecryptedUserNewPassword)); !pass {
+		// 校验用户密码复杂度
+		c.JSON(http.StatusForbidden, response.Error("新密码强度不符合要求", err))
 		return
 	}
 
