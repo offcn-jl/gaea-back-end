@@ -15,6 +15,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
+	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
+	"github.com/offcn-jl/gaea-back-end/commons/database/structs"
 	"github.com/offcn-jl/gaea-back-end/commons/logger"
 	"github.com/offcn-jl/gaea-back-end/commons/request"
 	"regexp"
@@ -59,4 +61,71 @@ func MisToken(misToken string) (bool, error) {
 			}
 		}
 	}
+}
+
+// IsSubordinateRole 检查是否是下属角色
+// 参数1: superior, 上级
+// 参数2: subordinate, 下属
+func IsSubordinateRole(superior, subordinate uint) bool {
+	// 检查传入的上级
+	if superior == 0 {
+		// 避免传入空上级导致提权
+		return false
+	}
+
+	// 取出全部下属角色
+	var subordinateRoles []structs.SystemRole
+	orm.MySQL.Gaea.Where("superior_id = ?", superior).Find(&subordinateRoles)
+
+	// 遍历全部下属角色, 如果找到匹配的, 则返回真, 并结束遍历
+	if len(subordinateRoles) != 0 {
+		// 遍历当前一层的
+		for index := range subordinateRoles {
+			// 匹配后返回真
+			if subordinateRoles[index].ID == subordinate {
+				return true
+			}
+		}
+		// 递归遍历更深层的
+		for index := range subordinateRoles {
+			// 递归结果为真时, 返回真
+			if IsSubordinateRole(subordinateRoles[index].ID, subordinate) {
+				return true
+			}
+		}
+	}
+
+	// 遍历了全部下属角色并且没找到匹配的结果, 返回假
+	return false
+}
+
+// PasswordComplexity 检查密码复杂度是否符合标准
+func PasswordComplexity(password string) (bool, error) {
+	// 检查密码长度
+	if len(password) < 8 {
+		return false, errors.New("密码长度不足 8 位")
+	}
+
+	// 检查密码中是否包含数字
+	if match, _ := regexp.MatchString(`[0-9]+`, password); !match {
+		return false, errors.New("密码中应当包含数字")
+	}
+
+	// 检查密码中是否包含小写字母
+	if match, _ := regexp.MatchString(`[a-z]+`, password); !match {
+		return false, errors.New("密码中应当包含小写字母")
+	}
+
+	// 检查密码中是否包含大写字母
+	if match, _ := regexp.MatchString(`[A-Z]+`, password); !match {
+		return false, errors.New("密码中应当包含大写字母")
+	}
+
+	// 检查密码中是否包含特殊符号
+	if match, _ := regexp.MatchString(`[~!@#$%^&*?_-]+`, password); !match {
+		return false, errors.New("密码中应当包含特殊符号，如 ~!@#$%^&*?_- ")
+	}
+
+	// 通过检查
+	return true, nil
 }
