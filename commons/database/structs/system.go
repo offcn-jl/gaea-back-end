@@ -45,12 +45,12 @@ type SystemConfig struct {
 // SystemUser 系统用户表
 type SystemUser struct {
 	gorm.Model
-	CreatedUserID uint   `gorm:"not null"`                    // 创建用户 ID
-	UpdatedUserID uint   `gorm:"not null"`                    // 最终修改用户 ID
-	RoleID        uint   `gorm:"not null"`                    // 角色 ID
-	Username      string `gorm:"not null"`                    // 用户名
-	Password      string `gorm:"type:varchar(1000);not null"` // 密码
-	Name          string `gorm:"not null"`                    // 姓名
+	CreatedUserID uint   `gorm:"not null"`                                    // 创建用户 ID
+	UpdatedUserID uint   `gorm:"not null"`                                    // 最终修改用户 ID
+	RoleID        uint   `gorm:"not null" json:"RoleID" binding:"required"`   // 角色 ID
+	Username      string `gorm:"not null" json:"Username" binding:"required"` // 用户名
+	Password      string `gorm:"type:varchar(1000);not null" json:"Password"` // 密码
+	Name          string `gorm:"not null" json:"Name" binding:"required"`     // 姓名
 }
 
 // SystemUserLoginFailLog 系统用户登陆失败日志
@@ -74,9 +74,9 @@ type SystemSession struct {
 // SystemRole 系统角色表
 type SystemRole struct {
 	gorm.Model
-	CreatedUserID uint   `gorm:"not null"` // 创建用户 ID
-	UpdatedUserID uint   `gorm:"not null"` // 最终修改用户 ID
-	FatherID      uint   `gorm:"not null"` // 父角色 ID
-	Name          string `gorm:"not null"` // 角色名称
-	Permissions   string `gorm:"not null"` // 权限集
+	CreatedUserID uint   `gorm:"not null"`                                       // 创建用户 ID
+	UpdatedUserID uint   `gorm:"not null"`                                       // 最终修改用户 ID
+	SuperiorID    uint   `gorm:"not null" json:"SuperiorID" binding:"required"`  // 上级角色 ID
+	Name          string `gorm:"not null" json:"Name" binding:"required"`        // 角色名称
+	Permissions   string `gorm:"not null" json:"Permissions" binding:"required"` // 权限集
 }
