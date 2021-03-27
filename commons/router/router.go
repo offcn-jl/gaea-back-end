@@ -114,6 +114,48 @@ func InitRouter(basePath string) *gin.Engine {
 				// 修改配置
 				configManagesGroup.POST("/update", manages.SystemManagesConfigManagesUpdateConfig)
 			}
+
+			// 角色与用户管理
+			rolesAndUsersManagesGroup := systemManagesGroup.Group("/roles-and-users-manages", checkSessionAndPermission("/system-manage/roles-and-users-manage"))
+			{
+				// 角色管理
+				rolesManagesGroup := rolesAndUsersManagesGroup.Group("/roles")
+				{
+					// 创建角色
+					rolesManagesGroup.POST("/create", manages.SystemManagesRolesAndUsersManagesRoleCreate)
+
+					// 获取当前用户所属角色及下属角色树
+					rolesManagesGroup.GET("/tree", manages.SystemManagesRolesAndUsersManagesRoleGetTree)
+
+					// 修改角色信息
+					rolesManagesGroup.PUT("/role/:RoleID/update/info", manages.SystemManagesRolesAndUsersManagesRoleUpdateInfo)
+
+					// 修改角色的上级角色
+					rolesManagesGroup.PUT("/role/:RoleID/update/superior/:SuperiorRoleID", manages.SystemManagesRolesAndUsersManagesRoleUpdateSuperior)
+				}
+
+				// 用户管理
+				usersManagesGroup := rolesAndUsersManagesGroup.Group("/users")
+				{
+					// 创建用户
+					usersManagesGroup.POST("/create", manages.SystemManagesRolesAndUsersManagesUserCreate)
+
+					// 分页获取用户列表
+					usersManagesGroup.GET("/list/role/:RoleID/page/:Page/limit/:Limit", manages.SystemManagesRolesAndUsersManagesUserPaginationGet)
+
+					// 修改用户信息
+					usersManagesGroup.PUT("/user/:UserID/update/info", manages.SystemManagesRolesAndUsersManagesUserUpdate)
+
+					// 禁用用户
+					usersManagesGroup.PUT("/user/:UserID/disable", manages.SystemManagesRolesAndUsersManagesUserDisable)
+
+					// 启用用户
+					usersManagesGroup.PUT("/user/:UserID/enable", manages.SystemManagesRolesAndUsersManagesUserEnable)
+
+					// 搜索用户
+					usersManagesGroup.GET("/user/search/:Type/:Criteria", manages.SystemManagesRolesAndUsersManagesSearchUser)
+				}
+			}
 		}
 	}
 
