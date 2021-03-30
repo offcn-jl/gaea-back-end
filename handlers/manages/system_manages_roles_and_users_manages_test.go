@@ -643,3 +643,45 @@ func TestSystemManagesRolesAndUsersManagesUserEnable(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"Success\"}")
 	})
 }
+
+// TestSystemManagesRolesAndUsersManagesSearchUser 测试 SystemManagesRolesAndUsersManagesSearchUser 是否可以按照预期搜索用户, 如果存在则返回用户所属角色及所在位置
+func TestSystemManagesRolesAndUsersManagesSearchUser(t *testing.T) {
+	Convey("测试 SystemManagesRolesAndUsersManagesSearchUser 是否可以按照预期搜索用户, 如果存在则返回用户所属角色及所在位置", t, func() {
+		// 测试 按照搜索类型及参数进行搜索用户操作 [ 搜索条件配置有误 ]
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemManagesRolesAndUsersManagesSearchUser(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"搜索条件配置有误\"}")
+
+		// 配置 Path 中的请求参数
+		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "Type", Value: "id"}, gin.Param{Key: "Criteria", Value: "101"}}
+
+		// 测试 按照搜索类型及参数进行搜索用户操作 [ ID ] 获取用户信息在第几页并返回数据
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemManagesRolesAndUsersManagesSearchUser(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Data\":{\"Rank\":0,\"RoleID\":1002},\"Message\":\"Success\"}")
+
+		// 配置 Path 中的请求参数
+		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "Type", Value: "name"}, gin.Param{Key: "Criteria", Value: "101"}}
+
+		// 测试 按照搜索类型及参数进行搜索用户操作 [ Name, 姓名 ] 获取用户信息在第几页并返回数据
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemManagesRolesAndUsersManagesSearchUser(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Data\":{\"Rank\":0,\"RoleID\":1002},\"Message\":\"Success\"}")
+
+		// 配置 Path 中的请求参数
+		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "Type", Value: "username"}, gin.Param{Key: "Criteria", Value: "101"}}
+
+		// 测试 按照搜索类型及参数进行搜索用户操作 [ Username, 工号 ] 获取用户信息在第几页并返回数据
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemManagesRolesAndUsersManagesSearchUser(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Data\":{\"Rank\":0,\"RoleID\":1002},\"Message\":\"Success\"}")
+
+		// 配置 Path 中的请求参数
+		utt.GinTestContext.Params = gin.Params{gin.Param{Key: "Type", Value: "username"}, gin.Param{Key: "Criteria", Value: "unknown"}}
+
+		// 测试 检查是否存在目标用户
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		SystemManagesRolesAndUsersManagesSearchUser(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"用户不存在\"}")
+	})
+}

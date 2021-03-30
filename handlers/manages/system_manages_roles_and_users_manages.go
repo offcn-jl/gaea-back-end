@@ -538,6 +538,7 @@ func SystemManagesRolesAndUsersManagesUserEnable(c *gin.Context) {
 
 // SystemManagesRolesAndUsersManagesSearchUser 搜索用户, 如果存在则返回用户所属角色及所在位置
 func SystemManagesRolesAndUsersManagesSearchUser(c *gin.Context) {
+	// 按照搜索类型及参数进行搜索用户操作
 	userInfo := structs.SystemUser{}
 	switch c.Param("Type") {
 	case "id":
