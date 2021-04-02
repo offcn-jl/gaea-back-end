@@ -70,6 +70,13 @@ func InitRouter(basePath string) *gin.Engine {
 			// 获取微信小程序 AccessToken
 			authenticationGroup.GET("/mini-program/get/access-token", services.GetMiniProgramAccessToken)
 		}
+
+		// 工具
+		toolsGroup := servicesGroup.Group("/tools")
+		{
+			// 获取短链接
+			toolsGroup.POST("/url-shortener", services.ToolsUrlShortenerCreateShortLink)
+		}
 	}
 
 	// 管理平台
