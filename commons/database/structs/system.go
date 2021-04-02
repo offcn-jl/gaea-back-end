@@ -40,6 +40,11 @@ type SystemConfig struct {
 	// RSA 签名密钥
 	RSAPublicKey  string `gorm:"type:varchar(1000);" json:"RSAPublicKey" binding:"required"`  // RSA 公钥
 	RSAPrivateKey string `gorm:"type:varchar(4000);" json:"RSAPrivateKey" binding:"required"` // RSA 私钥
+	// 工具 短链接生成器 ( 长链接转短链接 ) 相关配置
+	ToolsUrlShortenerNotFoundContentType string // 未找到页面 响应数据类型
+	ToolsUrlShortenerNotFoundData        string // 未找到页面 响应内容
+	ToolsUrlShortenerDisabledContentType string // 页面禁用 响应数据类型
+	ToolsUrlShortenerDisabledData        string // 页面禁用 响应内容
 }
 
 // SystemUser 系统用户表
