@@ -17,6 +17,7 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/utt"
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
+	"os"
 	"testing"
 )
 
@@ -57,12 +58,23 @@ func TestToolsUrlShortenerCreateShortLink(t *testing.T) {
 		// 测试 创建记录并返回创建成功
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		ToolsUrlShortenerCreateShortLink(utt.GinTestContext)
-		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Data\":{\"Repetitive\":false,\"ShortUrl\":\"https://offcn.ltd/b\"},\"Message\":\"Success\"}")
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Data\":{\"Repetitive\":false,\"ShortUrl\":\"https://offcn.ltd/test/b\"},\"Message\":\"Success\"}")
 
 		// 添加请求内容
 		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/?access-token=fake-access-token", bytes.NewBufferString("{\"URL\":\"https://host-1.domain\"}"))
 
 		// 测试 检查是否已经存在短链记录
+		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
+		ToolsUrlShortenerCreateShortLink(utt.GinTestContext)
+		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Data\":{\"Repetitive\":true,\"ShortUrl\":\"https://offcn.ltd/test/b\"},\"Message\":\"Success\"}")
+
+		// 添加请求内容
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/?access-token=fake-access-token", bytes.NewBufferString("{\"URL\":\"https://host-1.domain\"}"))
+
+		// 修改运行环境为生产环境
+		os.Setenv("GIN_MODE", "release")
+
+		// 测试 生产环境
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		ToolsUrlShortenerCreateShortLink(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Data\":{\"Repetitive\":true,\"ShortUrl\":\"https://offcn.ltd/b\"},\"Message\":\"Success\"}")

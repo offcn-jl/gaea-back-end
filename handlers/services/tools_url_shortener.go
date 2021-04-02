@@ -19,6 +19,7 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/response"
 	"github.com/offcn-jl/gaea-back-end/commons/utils"
 	"net/http"
+	"os"
 )
 
 // ToolsUrlShortenerCreateShortLink 新建短链接
@@ -40,13 +41,18 @@ func ToolsUrlShortenerCreateShortLink(c *gin.Context) {
 		return
 	}
 
+	basePath := "https://offcn.ltd/test/"
+	if os.Getenv("GIN_MODE") == "release" {
+		basePath = "https://offcn.ltd/"
+	}
+
 	// 检查是否已经存在短链记录
 	checkInfo := structs.ToolsUrlShortener{}
 	orm.MySQL.Gaea.Where("url = ?", requestInfo.URL).Find(&checkInfo)
 	if checkInfo.ID != 0 {
 		c.JSON(http.StatusOK, response.Data(map[string]interface{}{
-			"Repetitive": true,                                                    // 是否重复
-			"ShortUrl":   "https://offcn.ltd/" + utils.Base62Encode(checkInfo.ID), // 短链接
+			"Repetitive": true,                                        // 是否重复
+			"ShortUrl":   basePath + utils.Base62Encode(checkInfo.ID), // 短链接
 		}))
 		return
 	}
@@ -62,7 +68,7 @@ func ToolsUrlShortenerCreateShortLink(c *gin.Context) {
 
 	// 返回创建成功
 	c.JSON(http.StatusOK, response.Data(map[string]interface{}{
-		"Repetitive": false,                                                  // 是否重复
-		"ShortUrl":   "https://offcn.ltd/" + utils.Base62Encode(saveInfo.ID), // 短链接
+		"Repetitive": false,                                      // 是否重复
+		"ShortUrl":   basePath + utils.Base62Encode(saveInfo.ID), // 短链接
 	}))
 }
