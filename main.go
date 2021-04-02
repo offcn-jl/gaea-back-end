@@ -13,6 +13,7 @@ import (
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
 	"github.com/offcn-jl/gaea-back-end/commons/logger"
+	"github.com/offcn-jl/gaea-back-end/commons/router"
 	"os"
 )
 
@@ -61,7 +62,7 @@ func main() {
 	}
 
 	// 初始化路由后启动监听
-	if err := initRouter(mode).Run(); err != nil {
+	if err := router.InitRouter(mode).Run(); err != nil {
 		// 处理错误
 		logger.Panic(err)
 	}

@@ -162,6 +162,10 @@ func autoMigrate() {
 	MySQL.Gaea.AutoMigrate(
 		// System 系统
 		structs.SystemConfig{},
+		structs.SystemUser{},
+		structs.SystemUserLoginFailLog{},
+		structs.SystemSession{},
+		structs.SystemRole{},
 		// SingleSignOn 单点登陆
 		structs.SingleSignOnLoginModule{},
 		structs.SingleSignOnVerificationCode{},
@@ -172,6 +176,9 @@ func autoMigrate() {
 		structs.SingleSignOnCRMRoundLog{},
 		structs.SingleSignOnErrorLog{},
 		structs.SingleSignOnPushLog{},
+		// Tools 工具
+		structs.ToolsUrlShortener{},
+		structs.ToolsUrlShortenerRedirectLog{},
 	)
 	// 判断运行环境, 如果是 release 则初始化仅在生产环境部署的表
 	if os.Getenv("GIN_MODE") == "release" {

@@ -7,10 +7,13 @@ on:
 env:
   TKE_REGISTRY: hkccr.ccs.tencentyun.com
   TKE_IMAGE_URL: hkccr.ccs.tencentyun.com/gaea/back-end-test
+  TKE_URL_SHORTENER_IMAGE_URL: hkccr.ccs.tencentyun.com/gaea/url-shortener-test
   TKE_REGION: ap-beijing
   TKE_CLUSTER_ID: cls-2ferrnvh
   DEPLOYMENT_NAME: gaea-test
   CONTAINER_NAME: gaea-test
+  DEPLOYMENT_URL_SHORTENER_NAME: gaea-url-shortener-test
+  CONTAINER_URL_SHORTENER_NAME: gaea-url-shortener-test
 
 jobs:
   ci:
@@ -48,7 +51,10 @@ jobs:
 
       - name: 交叉编译
         # 不添加构建参数 CGO_ENABLED=0 会导致编译出的二进制程序无法在 alpine 中运行
-        run: CGO_ENABLED=0 go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea
+        run: |
+          CGO_ENABLED=0 go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea
+          cd url_shortener
+          CGO_ENABLED=0 go build -ldflags "-X 'github.com/offcn-jl/gaea-back-end/commons/config.Version=${GITHUB_SHA:0:7} [ `date +"%Y/%m/%d %H:%M:%S"` ]'" -o gaea_url_shortener
 
       - name: 添加 phonedata 库的手机号归属地代码数据到 Docker 的上下文
         run: cp /home/runner/go/pkg/mod/github.com/xluohome/phonedata@v0.0.0-20200423024337-2be14779ab82/phone.dat ./
@@ -57,12 +63,17 @@ jobs:
         run: |
           docker build -t ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7} .
           docker tag ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7} ${TKE_IMAGE_URL}:latest
+          cd url_shortener
+          docker build -t ${TKE_URL_SHORTENER_IMAGE_URL}:${GITHUB_SHA:0:7} .
+          docker tag ${TKE_URL_SHORTENER_IMAGE_URL}:${GITHUB_SHA:0:7} ${TKE_URL_SHORTENER_IMAGE_URL}:latest
 
       - name: 推送镜像
         run: |
           docker login -u ${{secrets.TKE_REGISTRY_USER}} -p ${{secrets.TKE_REGISTRY_PASSWORD}} ${TKE_REGISTRY}
           docker push ${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
           docker push ${TKE_IMAGE_URL}:latest
+          docker push ${TKE_URL_SHORTENER_IMAGE_URL}:${GITHUB_SHA:0:7}
+          docker push ${TKE_URL_SHORTENER_IMAGE_URL}:latest
 
       - name: 配置 ~/.kube/config 用于连接 TKE 集群
         uses: TencentCloud/tke-cluster-credential-action@v1
@@ -90,4 +101,6 @@ jobs:
         run: |
           kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${TKE_IMAGE_URL}:${GITHUB_SHA:0:7}
           kubectl rollout status deployment/${DEPLOYMENT_NAME}
+          kubectl set image deployment/${DEPLOYMENT_URL_SHORTENER_NAME} ${CONTAINER_URL_SHORTENER_NAME}=${TKE_URL_SHORTENER_IMAGE_URL}:${GITHUB_SHA:0:7}
+          kubectl rollout status deployment/${DEPLOYMENT_URL_SHORTENER_NAME}
           kubectl get services -o wide

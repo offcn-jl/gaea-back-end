@@ -22,6 +22,11 @@ func Data(data interface{}) Struct {
 	return Struct{"Message": "Success", "Data": data}
 }
 
+// PaginationData 创建带分页数据带响应的快捷方式
+func PaginationData(data interface{}, total int) Struct {
+	return Struct{"Message": "Success", "Data": data, "Total": total}
+}
+
 // Error 创建错误响应的快捷方式
 func Error(messageText string, err error) Struct {
 	return Struct{"Message": messageText, "Error": err.Error()}
