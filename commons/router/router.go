@@ -164,6 +164,23 @@ func InitRouter(basePath string) *gin.Engine {
 				}
 			}
 		}
+
+		// 工具
+		toolsGroup := managesGroup.Group("/tools")
+		{
+			// 短链接生成器
+			urlShortenerGroup := toolsGroup.Group("/url-shortener", checkSessionAndPermission("/tools/url-shortener"))
+			{
+				// 新建短链接
+				urlShortenerGroup.POST("/create", manages.ToolsUrlShortenerCreateShortLink)
+
+				// 修改短链接
+				urlShortenerGroup.PUT("/update", manages.ToolsUrlShortenerUpdateShortLink)
+
+				// 分页获取短链接列表 ( 带搜索 )
+				urlShortenerGroup.GET("/list/page/:Page/limit/:Limit", manages.ToolsUrlShortenerGetList)
+			}
+		}
 	}
 
 	// 活动 ( 外部服务 )

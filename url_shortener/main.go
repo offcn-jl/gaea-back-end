@@ -123,7 +123,7 @@ func main() {
 				UserAgent:     c.Request.UserAgent(),
 				Status:        "Disabled",
 			})
-			c.Data(http.StatusNotFound, config.Get().ToolsUrlShortenerDisabledContentType, []byte(config.Get().ToolsUrlShortenerDisabledData))
+			c.Data(http.StatusForbidden, config.Get().ToolsUrlShortenerDisabledContentType, []byte(config.Get().ToolsUrlShortenerDisabledData))
 			return
 		}
 
