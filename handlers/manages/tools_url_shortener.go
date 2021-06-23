@@ -194,7 +194,7 @@ func ToolsUrlShortenerGetList(c *gin.Context) {
 		}
 		// 创建用户 条件三合一 ( ID [ 强匹配 ]; 工号 [ 模糊搜索 ]; 姓名 [ 模糊搜索 ] )
 		if c.Query("created-user") != "" {
-			criteria += " AND ( created_user.id = " + c.Query("created-user") + " OR created_user.username LIKE '%" + c.Query("created-user") + "%' OR created_user.name LIKE '%" + c.Query("created-user") + "%' )"
+			criteria += " AND ( created_user.id = '" + c.Query("created-user") + "' OR created_user.username LIKE '%" + c.Query("created-user") + "%' OR created_user.name LIKE '%" + c.Query("created-user") + "%' )"
 		}
 		if criteria == "" {
 			c.JSON(http.StatusNotFound, response.Message("搜索条件配置有误"))
