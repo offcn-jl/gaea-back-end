@@ -10,7 +10,6 @@
 package services
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/offcn-jl/gaea-back-end/commons/config"
 	"github.com/offcn-jl/gaea-back-end/commons/database/orm"
@@ -25,7 +24,6 @@ import (
 // ToolsUrlShortenerCreateShortLink 新建短链接
 func ToolsUrlShortenerCreateShortLink(c *gin.Context) {
 	// 校验 AccessToken 是否合法
-	fmt.Println(c.Query("access-token"))
 	if c.Query("access-token") != config.Get().ServicesAccessToken {
 		c.JSON(http.StatusBadRequest, response.Message("AccessToken 不正确"))
 		return
