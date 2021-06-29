@@ -30,8 +30,10 @@ func init() {
 // TestToolsUrlShortenerCreateShortLink 测试 ToolsUrlShortenerCreateShortLink 是否可以按照预期新建短链接
 func TestToolsUrlShortenerCreateShortLink(t *testing.T) {
 	Convey("测试 ToolsUrlShortenerCreateShortLink 是否可以按照预期新建短链接", t, func() {
+		// 重置测试上下文
+		utt.ResetContext()
 		// 初始化 Request
-		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/?access-token=fake-access-token-url-shortener", nil)
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/?access-token=wrong-fake-access-token", nil)
 
 		// 测试 校验 AccessToken 是否合法
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
@@ -40,8 +42,13 @@ func TestToolsUrlShortenerCreateShortLink(t *testing.T) {
 
 		// 修改 AccessToken
 		currentConfig := config.Get()
-		currentConfig.ServicesAccessToken = "fake-access-token-url-shortener"
+		currentConfig.ServicesAccessToken = "fake-access-token"
 		config.Update(orm.MySQL.Gaea, currentConfig)
+
+		// 重置测试上下文
+		utt.ResetContext()
+		// 添加请求内容
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/?access-token=fake-access-token", nil)
 
 		// 测试 绑定参数
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
