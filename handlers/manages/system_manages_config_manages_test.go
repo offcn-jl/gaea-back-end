@@ -48,7 +48,7 @@ func TestSystemManagesConfigManagesUpdateConfig(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"invalid request\",\"Message\":\"提交的 Json 数据不正确\"}")
 
 		// 随机生成一个新配置
-		newConfig := structs.SystemConfig{DisableDebug: false, CORSRuleServices: time.Now().Format("20060102150405"), CORSRuleManages: "-", CORSRuleEvents: "-", OffcnSmsURL: "-", OffcnSmsUserName: "-", OffcnSmsPassword: "-", OffcnSmsTjCode: "-", OffcnMisURL: "-", OffcnMisAppID: "-", OffcnMisToken: "-", OffcnMisCode: "-", TencentCloudAPISecretID: "-", TencentCloudAPISecretKey: "-", TencentCloudSmsSdkAppId: "-", ServicesAccessToken: "-", RSAPublicKey: "-", RSAPrivateKey: "-"}
+		newConfig := structs.SystemConfig{DisableDebug: false, CORSRuleServices: time.Now().Format("20060102150405"), CORSRuleManages: "-", CORSRuleEvents: "-", OffcnSmsURL: "-", OffcnSmsUserName: "-", OffcnSmsPassword: "-", OffcnSmsTjCode: "-", OffcnMisURL: "-", OffcnMisAppID: "-", OffcnMisToken: "-", OffcnMisCode: "-", OffcnOCCKey: "-", TencentCloudAPISecretID: "-", TencentCloudAPISecretKey: "-", TencentCloudSmsSdkAppId: "-", ServicesAccessToken: "-", RSAPublicKey: "-", RSAPrivateKey: "-"}
 
 		// 增加 Body
 		jsonBytes, _ := json.Marshal(newConfig)

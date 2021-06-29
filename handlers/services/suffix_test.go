@@ -96,6 +96,9 @@ func TestSuffixGetAvailable(t *testing.T) {
 // TestSuffixPushCRM 测试 SuffixPushCRM 函数是否可以按照预期推送带有个人后缀的信息到 CRM
 func TestSuffixPushCRM(t *testing.T) {
 	Convey("测试 SuffixGetAvailable 函数是否可以按照预期获取所有后缀", t, func() {
+		// 配置请求内容
+		utt.GinTestContext.Request, _ = http.NewRequest("POST", "/", nil)
+
 		utt.HttpTestResponseRecorder.Body.Reset() // 再次测试前重置 body
 		SuffixPushCRM(utt.GinTestContext)
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Error\":\"invalid request\",\"Message\":\"提交的 Json 数据不正确\"}")

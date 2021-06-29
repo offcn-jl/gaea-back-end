@@ -17,29 +17,30 @@ import (
 // SystemConfig 系统配置表
 type SystemConfig struct {
 	gorm.Model
-	DisableDebug bool `json:"DisableDebug"` // 关闭调试模式, 由于 bool 类型的默认初始值为 false 为了在没有初始化成功的情况下默认开启调试, 所以使用 禁用调试 替代 开启调试
+	DisableDebug bool // 关闭调试模式, 由于 bool 类型的默认初始值为 false 为了在没有初始化成功的情况下默认开启调试, 所以使用 禁用调试 替代 开启调试
 	// 跨域检查规则
-	CORSRuleServices string `json:"CORSRuleServices" binding:"required"` // Service 内部服务路由组
-	CORSRuleManages  string `json:"CORSRuleManages" binding:"required"`  // Manages 管理平台路由组
-	CORSRuleEvents   string `json:"CORSRuleEvents" binding:"required"`   // Events 活动 ( 外部服务 ) 路由组
+	CORSRuleServices string `binding:"required"` // Service 内部服务路由组
+	CORSRuleManages  string `binding:"required"` // Manages 管理平台路由组
+	CORSRuleEvents   string `binding:"required"` // Events 活动 ( 外部服务 ) 路由组
 	// 中公教育内部平台相关配置
-	OffcnSmsURL      string `json:"OffcnSmsURL" binding:"required"`      // 短信平台 接口地址
-	OffcnSmsUserName string `json:"OffcnSmsUserName" binding:"required"` // 短信平台 用户名
-	OffcnSmsPassword string `json:"OffcnSmsPassword" binding:"required"` // 短信平台 密码
-	OffcnSmsTjCode   string `json:"OffcnSmsTjCode" binding:"required"`   // 短信平台 发送方识别码
-	OffcnMisURL      string `json:"OffcnMisURL" binding:"required"`      // 口令码平台 接口地址
-	OffcnMisAppID    string `json:"OffcnMisAppID" binding:"required"`    // 口令码平台 应用 ID
-	OffcnMisToken    string `json:"OffcnMisToken" binding:"required"`    // 口令码平台 令牌
-	OffcnMisCode     string `json:"OffcnMisCode" binding:"required"`     // 口令码平台 签名密钥
+	OffcnSmsURL      string `binding:"required"` // 短信平台 接口地址
+	OffcnSmsUserName string `binding:"required"` // 短信平台 用户名
+	OffcnSmsPassword string `binding:"required"` // 短信平台 密码
+	OffcnSmsTjCode   string `binding:"required"` // 短信平台 发送方识别码
+	OffcnMisURL      string `binding:"required"` // 口令码平台 接口地址
+	OffcnMisAppID    string `binding:"required"` // 口令码平台 应用 ID
+	OffcnMisToken    string `binding:"required"` // 口令码平台 令牌
+	OffcnMisCode     string `binding:"required"` // 口令码平台 签名密钥
+	OffcnOCCKey      string `binding:"required"` // OCC 平台 签名密钥
 	// 腾讯云相关配置
-	TencentCloudAPISecretID  string `json:"TencentCloudAPISecretID" binding:"required"`  // 令牌
-	TencentCloudAPISecretKey string `json:"TencentCloudAPISecretKey" binding:"required"` // 密钥
-	TencentCloudSmsSdkAppId  string `json:"TencentCloudSmsSdkAppId" binding:"required"`  // 短信应用 ID
+	TencentCloudAPISecretID  string `binding:"required"` // 令牌
+	TencentCloudAPISecretKey string `binding:"required"` // 密钥
+	TencentCloudSmsSdkAppId  string `binding:"required"` // 短信应用 ID
 	// 内部服务相关配置
-	ServicesAccessToken string `json:"ServicesAccessToken" binding:"required"` // 接口访问令牌
+	ServicesAccessToken string `binding:"required"` // 接口访问令牌
 	// RSA 签名密钥
-	RSAPublicKey  string `gorm:"type:varchar(1000);" json:"RSAPublicKey" binding:"required"`  // RSA 公钥
-	RSAPrivateKey string `gorm:"type:varchar(4000);" json:"RSAPrivateKey" binding:"required"` // RSA 私钥
+	RSAPublicKey  string `gorm:"type:varchar(1000);" binding:"required"` // RSA 公钥
+	RSAPrivateKey string `gorm:"type:varchar(4000);" binding:"required"` // RSA 私钥
 	// 工具 短链接生成器 ( 长链接转短链接 ) 相关配置
 	ToolsUrlShortenerNotFoundContentType string // 未找到页面 响应数据类型
 	ToolsUrlShortenerNotFoundData        string `gorm:"type:varchar(2550);"` // 未找到页面 响应内容
