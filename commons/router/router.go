@@ -77,6 +77,13 @@ func InitRouter(basePath string) *gin.Engine {
 			// 获取短链接
 			toolsGroup.POST("/url-shortener", services.ToolsUrlShortenerCreateShortLink)
 		}
+
+		// OCC 平台
+		occGroup := servicesGroup.Group("/occ")
+		{
+			// 获取接口调用 Sign
+			occGroup.GET("/sign", services.OCCGetSign)
+		}
 	}
 
 	// 管理平台
