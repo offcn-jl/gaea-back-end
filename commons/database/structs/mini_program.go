@@ -25,3 +25,19 @@ type MiniProgramAccessToken struct {
 	AccessToken string `gorm:"not null"` // 获取到的访问令牌
 	ExpiresIn   int64  `gorm:"not null"` // 访问令牌有效时间，单位：秒。目前是7200秒之内的值
 }
+
+// MiniProgramPhotoProcessingConfig 小程序 照片处理 配置
+type MiniProgramPhotoProcessingConfig struct {
+	gorm.Model
+	Name             string `gorm:"not null"` // 照片处理名称
+	Project          string `gorm:"not null"` // 项目
+	CRMEventFormID   uint   `gorm:"not null"` // CRM 活动表单 ID
+	CRMEventFormSID  string `gorm:"not null"` // CRM 活动表单 SID
+	MillimeterWidth  uint   `gorm:"not null"` // MM 毫米 宽度
+	MillimeterHeight uint   `gorm:"not null"` // MM 毫米 高度
+	PixelWidth       uint   `gorm:"not null"` // PX 像素 宽度
+	PixelHeight      uint   `gorm:"not null"` // PX 像素 高度
+	BackgroundColors string `gorm:"not null"` // 背景色列表
+	Description      string // 备注
+	Hot              bool   // 是否热门
+}
