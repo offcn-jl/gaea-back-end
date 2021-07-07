@@ -179,6 +179,8 @@ func autoMigrate() {
 		// Tools 工具
 		structs.ToolsUrlShortener{},
 		structs.ToolsUrlShortenerRedirectLog{},
+		// MiniProgram 小程序
+		structs.MiniProgramPhotoProcessingConfig{},
 	)
 	// 判断运行环境, 如果是 release 则初始化仅在生产环境部署的表
 	if os.Getenv("GIN_MODE") == "release" {

@@ -84,6 +84,20 @@ func InitRouter(basePath string) *gin.Engine {
 			// 获取接口调用 Sign
 			occGroup.GET("/sign", services.OCCGetSign)
 		}
+
+		// 小程序
+		miniProgramGroup := servicesGroup.Group("/mini-program")
+		{
+			// 照片处理
+			photoProcessingGroup := miniProgramGroup.Group("/photo-processing")
+			{
+				// 获取配置列表
+				photoProcessingGroup.GET("/configs/list", services.MiniProgramPhotoProcessingConfigList)
+
+				// 获取配置详情
+				photoProcessingGroup.GET("/config/:ID", services.MiniProgramPhotoProcessingConfig)
+			}
+		}
 	}
 
 	// 管理平台
