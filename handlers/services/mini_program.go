@@ -30,7 +30,7 @@ func MiniProgramPhotoProcessingConfigList(c *gin.Context) {
 	}
 
 	// 基本查询语句
-	sql := "SELECT id,`name`,millimeter_width,millimeter_height,pixel_width,pixel_height FROM mini_program_photo_processing_configs WHERE "
+	sql := "SELECT id,`name`,millimeter_width,millimeter_height,pixel_width,pixel_height FROM mini_program_photo_processing_configs WHERE (deleted_at > NOW() OR deleted_at IS NULL) "
 	// 符合条件的数据总量
 	total := 0
 	// 定义数据结构及用于保存数据的数组
