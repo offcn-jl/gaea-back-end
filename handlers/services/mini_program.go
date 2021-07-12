@@ -78,7 +78,7 @@ func MiniProgramPhotoProcessingConfig(c *gin.Context) {
 		Description      string // 备注
 	}{}
 
-	orm.MySQL.Gaea.Model(structs.MiniProgramPhotoProcessingConfig{}).Where("id = ?", c.Param("ID")).Scan(&info)
+	orm.MySQL.Gaea.Unscoped().Model(structs.MiniProgramPhotoProcessingConfig{}).Where("deleted_at > NOW() AND id = ?", c.Param("ID")).Scan(&info)
 
 	// 检查是否成功获取到配置
 	if info.Name == "" {
