@@ -126,7 +126,7 @@ func TestMiniProgramPhotoProcessingUpdate(t *testing.T) {
 		So(utt.HttpTestResponseRecorder.Body.String(), ShouldEqual, "{\"Message\":\"Success\"}")
 		checkInfo := structs.MiniProgramPhotoProcessingConfig{}
 		orm.MySQL.Gaea.Unscoped().Where("id = ?", testInfo.ID).Find(&checkInfo)
-		So(checkInfo.DeletedAt.String(), ShouldEqual, "2021-07-09 09:35:01 +0800 CST")
+		So(checkInfo.DeletedAt, ShouldNotBeNil)
 		So(checkInfo.Name, ShouldEqual, "new-name")
 		So(checkInfo.Project, ShouldEqual, "new-project")
 		So(checkInfo.CRMEventFormID, ShouldEqual, 2)
