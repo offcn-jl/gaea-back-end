@@ -30,7 +30,7 @@ func MiniProgramPhotoProcessingConfigList(c *gin.Context) {
 	}
 
 	// 基本查询语句
-	sql := "SELECT id,`name`,millimeter_width,millimeter_height,pixel_width,pixel_height FROM mini_program_photo_processing_configs WHERE (deleted_at > NOW() OR deleted_at IS NULL) "
+	sql := "SELECT id,`name`,millimeter_width,millimeter_height,pixel_width,pixel_height FROM mini_program_photo_processing_configs WHERE (deleted_at > NOW() OR deleted_at IS NULL) AND "
 	// 符合条件的数据总量
 	total := 0
 	// 定义数据结构及用于保存数据的数组
@@ -47,16 +47,16 @@ func MiniProgramPhotoProcessingConfigList(c *gin.Context) {
 	if c.Query("search") != "" {
 		// search 模糊搜索 名称、尺寸
 		orm.MySQL.Gaea.Debug().Raw(sql+"( `name` Like ? OR millimeter_width Like ? OR millimeter_height Like ? OR pixel_width Like ? OR pixel_height Like ? )", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%").Offset((page - 1) * limit).Limit(limit).Order("id DESC").Scan(&list)
-		orm.MySQL.Gaea.Model(structs.MiniProgramPhotoProcessingConfig{}).Where("`name` Like ? OR millimeter_width Like ? OR millimeter_height Like ? OR pixel_width Like ? OR pixel_height Like ?", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%").Count(&total)
+		orm.MySQL.Gaea.Model(structs.MiniProgramPhotoProcessingConfig{}).Where("(deleted_at > NOW() OR deleted_at IS NULL) AND `name` Like ? OR millimeter_width Like ? OR millimeter_height Like ? OR pixel_width Like ? OR pixel_height Like ?", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%", "%"+c.Query("search")+"%").Count(&total)
 	} else if c.Query("project") != "" {
 		// project 强匹配 项目
 		orm.MySQL.Gaea.Raw(sql+"project = ?", c.Query("project")).Offset((page - 1) * limit).Limit(limit).Order("id DESC").Scan(&list)
-		orm.MySQL.Gaea.Model(structs.MiniProgramPhotoProcessingConfig{}).Where("project = ?", c.Query("project")).Count(&total)
+		orm.MySQL.Gaea.Model(structs.MiniProgramPhotoProcessingConfig{}).Where("(deleted_at > NOW() OR deleted_at IS NULL) AND project = ?", c.Query("project")).Count(&total)
 
 	} else {
 		// 未配置条件 强匹配 热门
 		orm.MySQL.Gaea.Raw(sql+"hot = ?", true).Offset((page - 1) * limit).Limit(limit).Order("id DESC").Scan(&list)
-		orm.MySQL.Gaea.Model(structs.MiniProgramPhotoProcessingConfig{}).Where("hot = ?", true).Count(&total)
+		orm.MySQL.Gaea.Model(structs.MiniProgramPhotoProcessingConfig{}).Where("(deleted_at > NOW() OR deleted_at IS NULL) AND hot = ?", true).Count(&total)
 	}
 
 	// 返回数据
