@@ -23,7 +23,10 @@ import (
 func init() {
 	utt.InitTest() // 初始化测试数据并获取测试所需的上下文
 	orm.MySQL.Gaea = utt.ORM
+}
 
+// 创建测试数据
+func createTestData() {
 	orm.MySQL.Gaea.DropTableIfExists(&structs.MiniProgramPhotoProcessingConfig{})
 	orm.MySQL.Gaea.AutoMigrate(&structs.MiniProgramPhotoProcessingConfig{})
 
@@ -37,6 +40,9 @@ func init() {
 // TestMiniProgramPhotoProcessingConfigList 测试 MiniProgramPhotoProcessingConfigList 是否可以按预期按照查询参数获取照片处理配置列表
 func TestMiniProgramPhotoProcessingConfigList(t *testing.T) {
 	Convey("测试 MiniProgramPhotoProcessingConfigList 是否可以按预期按照查询参数获取照片处理配置列表", t, func() {
+		// 创建测试数据
+		createTestData()
+
 		// 测试 未配置条件 强匹配 热门
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		MiniProgramPhotoProcessingConfigList(utt.GinTestContext)
@@ -87,6 +93,9 @@ func TestMiniProgramPhotoProcessingConfigList(t *testing.T) {
 // TestMiniProgramPhotoProcessingConfig 测试 MiniProgramPhotoProcessingConfig 是否可以按照预期获取照片处理配置
 func TestMiniProgramPhotoProcessingConfig(t *testing.T) {
 	Convey("测试 MiniProgramPhotoProcessingConfig 是否可以按照预期获取照片处理配置", t, func() {
+		// 创建测试数据
+		createTestData()
+
 		// 测试 未配置 ID
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		MiniProgramPhotoProcessingConfig(utt.GinTestContext)

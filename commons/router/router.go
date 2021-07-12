@@ -202,6 +202,23 @@ func InitRouter(basePath string) *gin.Engine {
 				urlShortenerGroup.GET("/list/page/:Page/limit/:Limit", manages.ToolsUrlShortenerGetList)
 			}
 		}
+
+		// 小程序
+		miniProgramGroup := managesGroup.Group("/mini-program")
+		{
+			// 中公证件照
+			photoProcessingGroup := miniProgramGroup.Group("/photo-processing", checkSessionAndPermission("/mini-program/photo-processing"))
+			{
+				// 新建
+				photoProcessingGroup.POST("/create", manages.MiniProgramPhotoProcessingCreate)
+
+				// 修改
+				photoProcessingGroup.PUT("/update", manages.MiniProgramPhotoProcessingUpdate)
+
+				// 分页获取列表 带搜索
+				photoProcessingGroup.GET("/list", manages.MiniProgramPhotoProcessingGetList)
+			}
+		}
 	}
 
 	// 活动 ( 外部服务 )

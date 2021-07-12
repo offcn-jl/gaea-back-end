@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // init 初始化操作
@@ -109,7 +110,7 @@ func main() {
 		}
 
 		// 页面已禁用
-		if urlInfo.DeletedAt != nil {
+		if urlInfo.DeletedAt.Before(time.Now()) {
 			// 保存请求记录
 			orm.MySQL.Gaea.Create(&structs.ToolsUrlShortenerRedirectLog{
 				UrlID:         urlInfo.ID,

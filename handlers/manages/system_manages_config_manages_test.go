@@ -42,6 +42,9 @@ func TestSystemManagesConfigManagesPaginationGetConfig(t *testing.T) {
 // TestSystemManagesConfigManagesUpdateConfig 测试 SystemManagesConfigManagesUpdateConfig 是否可以修改配置
 func TestSystemManagesConfigManagesUpdateConfig(t *testing.T) {
 	Convey("测试 SystemManagesConfigManagesUpdateConfig 是否可以修改配置", t, func() {
+		// 重置请求上下文
+		utt.ResetContext()
+
 		// 测试绑定数据错误
 		utt.HttpTestResponseRecorder.Body.Reset() // 测试前重置 body
 		SystemManagesConfigManagesUpdateConfig(utt.GinTestContext)

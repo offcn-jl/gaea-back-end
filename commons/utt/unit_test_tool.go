@@ -48,6 +48,7 @@ var tableList = []interface{}{
 	// MiniProgram 小程序
 	structs.MiniProgram{},
 	structs.MiniProgramAccessToken{},
+	structs.MiniProgramPhotoProcessingConfig{},
 }
 
 // CreatORM 单元测试工具 创建 ORM
