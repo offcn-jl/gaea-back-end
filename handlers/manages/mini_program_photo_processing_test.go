@@ -37,7 +37,6 @@ func createMiniProgramPhotoProcessingTestUserAndRoleData() {
 	orm.MySQL.Gaea.Create(&structs.SystemRole{Model: gorm.Model{ID: 1102}, Name: "1102", SuperiorID: 1101})
 	orm.MySQL.Gaea.Create(&structs.SystemUser{Model: gorm.Model{ID: 111}, Name: "111", Username: "111", RoleID: 1101, CreatedUserID: 1, UpdatedUserID: 1})
 	orm.MySQL.Gaea.Create(&structs.SystemUser{Model: gorm.Model{ID: 112}, Name: "112", Username: "112", RoleID: 1102, CreatedUserID: 1, UpdatedUserID: 1})
-
 }
 
 // TestMiniProgramPhotoProcessingCreate 测试 MiniProgramPhotoProcessingCreate 是否能按照预期完成新建
