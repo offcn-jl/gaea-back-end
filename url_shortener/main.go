@@ -110,7 +110,7 @@ func main() {
 		}
 
 		// 页面已禁用
-		if urlInfo.DeletedAt.Before(time.Now()) {
+		if urlInfo.DeletedAt != nil && urlInfo.DeletedAt.Before(time.Now()) {
 			// 保存请求记录
 			orm.MySQL.Gaea.Create(&structs.ToolsUrlShortenerRedirectLog{
 				UrlID:         urlInfo.ID,
